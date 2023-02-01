@@ -1,0 +1,55 @@
+name: maven publish
+
+on:
+  push:
+    branches:
+      - 'release/*'
+jobs:
+  generate_publish_id:
+    runs-on: ubuntu-latest
+    name: Create staging repository
+    outputs:
+      repository_id: ${{ steps.create.outputs.repository_id }}
+    steps:
+      - id: create
+        uses: nexus-actions/create-nexus-staging-repo@3e5e7209801629febdcf75541a4898710d28df9a
+        with:
+          username: ${{ secrets.SONATYPE_USERNAME }}
+          password: ${{ secrets.SONATYPE_PASSWORD }}
+          staging_profile_id: ${{ secrets.SONATYPE_PROFILE_ID }}
+          base_url: ${{ secrets.SONATYPE_BASE_URL }}
+  publish:
+    needs: generate_publish_id
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            gradlew: gradlew
+          - os: ubuntu-latest
+            gradlew: gradlew
+            env: all
+          - os: windows-latest
+            gradlew: gradlew.bat
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Print env type
+        run: echo "This runner with env type = ${{ matrix.env == 'all' && 'all' || 'native' }}"
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '11'
+          cache: 'gradle'
+      - name: Publish
+        run: ./${{ matrix.gradlew }} publish -no-daemon --no-parallel --stacktrace
+        env:
+          ORG_GRADLE_PROJECT_publishRepositoryUrl: ${{ secrets.SONATYPE_URL_PUBLISH_BY_REPOSITORY }}
+          ORG_GRADLE_PROJECT_publishRepositoryId: ${{ needs.generate_publish_id.outputs.repository_id }}
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingPrivateKey: ${{ secrets.SIGNING_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_isMainHost: ${{ matrix.env == 'all' && 'true' || 'false' }}
