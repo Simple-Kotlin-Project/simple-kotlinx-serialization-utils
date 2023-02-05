@@ -18,6 +18,7 @@ plugins {
     `maven-publish`
     kotlin("multiplatform") version "1.8.0"
     kotlin("plugin.serialization") version "1.8.0"
+    id("org.jetbrains.dokka") version "1.7.20"
     id("com.diffplug.spotless") version "6.14.0"
 }
 
@@ -50,6 +51,14 @@ spotless {
         ktlint("0.48.2")
         licenseHeaderFile("LICENSE_FILE_HEADER")
     }
+}
+
+val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
+
+val javadocJar: TaskProvider<Jar> by tasks.registering(Jar::class) {
+    dependsOn(dokkaHtml)
+    archiveClassifier.set("javadoc")
+    from(dokkaHtml.outputDirectory)
 }
 
 kotlin {
@@ -179,6 +188,8 @@ kotlin {
                         sign(this@all)
                     }
                 }
+
+                artifact(javadocJar)
             }
         }
     }
