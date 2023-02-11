@@ -87,9 +87,9 @@ kotlin {
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")
     when {
-        hostOs == "Mac OS X" -> macosX64("macos")
-        hostOs == "Linux" -> linuxX64("linux")
-        isMingwX64 -> mingwX64("win64")
+        hostOs == "Mac OS X" -> macosX64("native")
+        hostOs == "Linux" -> linuxX64("native")
+        isMingwX64 -> mingwX64("native")
         else -> throw GradleException("Host OS is not supported for this project")
     }
 
@@ -164,7 +164,7 @@ kotlin {
                     developers {
                         developer {
                             name.set("Ilia Loginov")
-                            email.set("dantes2104@gmail.com")
+                            email.set("masaqaz40@gmail.com")
                             organization.set("github")
                             organizationUrl.set("https://www.github.com")
                         }
@@ -182,8 +182,8 @@ kotlin {
                     }
                 }
 
-                signing {
-                    if (!keyId.isNullOrBlank() && !privateKey.isNullOrBlank() && !password.isNullOrBlank()) {
+                if (!keyId.isNullOrBlank() && !privateKey.isNullOrBlank() && !password.isNullOrBlank()) {
+                    signing {
                         useInMemoryPgpKeys(keyId, privateKey, password)
                         sign(this@all)
                     }
