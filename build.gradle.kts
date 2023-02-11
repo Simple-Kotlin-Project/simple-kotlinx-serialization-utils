@@ -164,7 +164,7 @@ kotlin {
                     developers {
                         developer {
                             name.set("Ilia Loginov")
-                            email.set("dantes2104@gmail.com")
+                            email.set("masaqaz40@gmail.com")
                             organization.set("github")
                             organizationUrl.set("https://www.github.com")
                         }
