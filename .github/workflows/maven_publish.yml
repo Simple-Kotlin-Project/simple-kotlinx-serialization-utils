@@ -41,7 +41,6 @@ jobs:
         with:
           distribution: 'corretto'
           java-version: '11'
-          cache: 'gradle'
       - name: Publish
         run: ./${{ matrix.gradlew }} publish -no-daemon --no-parallel --stacktrace
         env:
