@@ -35,6 +35,12 @@ class TestEncoder(
 
     override val serializersModule: SerializersModule = EmptySerializersModule()
 
+    override fun beginCollection(descriptor: SerialDescriptor, collectionSize: Int): CompositeEncoder {
+        val compositeEncoder = compositeEncoderConstructor(descriptor, this)
+        addNewElement("beginCollection", descriptor, null, compositeEncoder)
+        return compositeEncoder
+    }
+
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
         val compositeEncoder = compositeEncoderConstructor(descriptor, this)
         addNewElement("beginStructure", descriptor, null, compositeEncoder)

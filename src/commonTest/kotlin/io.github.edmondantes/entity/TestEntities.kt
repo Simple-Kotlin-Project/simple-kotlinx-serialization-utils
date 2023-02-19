@@ -16,6 +16,7 @@ package io.github.edmondantes.entity
 
 import io.github.edmondantes.serialization.annotation.AllowEncoder
 import io.github.edmondantes.serialization.annotation.IgnoreEncoder
+import io.github.edmondantes.serialization.annotation.InlineSerialization
 import io.github.edmondantes.serialization.decoding.UniqueDecoder
 import io.github.edmondantes.serialization.encoding.AllowContextualFilter
 import kotlinx.serialization.KSerializer
@@ -82,6 +83,26 @@ class FilterEntity(
     @IgnoreEncoder(arrayOf("id1"))
     val transactionId: String,
     val nestedContextualFilteredEntity: ContextualFilterEntity?,
+)
+
+@Serializable
+class TestEntityWithInlineProperty(
+    val notInline: String,
+    @InlineSerialization
+    val inlineProperty: SimpleTestEntity,
+)
+
+@Serializable
+class TestEntityWithInlineClass(
+    val notInline: String,
+    val inlineClass: TestInlineEntity,
+)
+
+@Serializable
+@InlineSerialization
+class TestInlineEntity(
+    val id: String,
+    val name: String,
 )
 
 @Serializable(ContextualFilterEntitySerializer::class)

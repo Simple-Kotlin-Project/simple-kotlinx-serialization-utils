@@ -20,6 +20,7 @@ plugins {
     kotlin("plugin.serialization") version "1.8.0"
     id("org.jetbrains.dokka") version "1.7.20"
     id("com.diffplug.spotless") version "6.14.0"
+    id("org.jetbrains.kotlinx.kover") version "0.6.1"
 }
 
 val releaseVersion: String by project
@@ -43,7 +44,10 @@ repositories {
 }
 
 spotless {
-    ratchetFrom("origin/master")
+    if (file("./.git").exists()) {
+        val defaultBranch = project.extra.properties["git.default.branch"] ?: "master"
+        ratchetFrom("origin/${defaultBranch}")
+    }
     encoding("UTF-8")
 
     kotlin {
@@ -117,7 +121,7 @@ kotlin {
                 val publishRepositoryUrl: String? by project
 
                 val resultUrl =
-                    if (publishRepositoryUrl.isNullOrBlank() || publishRepositoryUrl.isNullOrBlank()) {
+                    if (publishRepositoryUrl.isNullOrBlank() || publishRepositoryId.isNullOrBlank()) {
                         publishRepositoryUrl.orEmpty().ifEmpty { "./build/repo/" }
                     } else {
                         var resolvedUrl = publishRepositoryUrl.orEmpty().ifEmpty { "./build/repo/" }
@@ -154,13 +158,13 @@ kotlin {
                         .configureEach { onlyIf { isMainHost == true } }
                 }
 
-                groupId = "io.github.edmondantes"
+                groupId = project.group.toString()
                 version = releaseVersion
 
                 with(pom) {
                     name.set("Simple kotlinx serialization utils")
                     description.set("Small library which provide some utilities for koltinx.serialization")
-                    url.set("https://github.com/EdmonDantes/simple-kotlinx-serialization-utils")
+                    url.set("https://github.com/EdmonDantes/${project.name}")
                     developers {
                         developer {
                             name.set("Ilia Loginov")
@@ -176,9 +180,9 @@ kotlin {
                         }
                     }
                     scm {
-                        connection.set("scm:git:git://github.com/EdmonDantes/simple-kotlinx-serialization-utils.git")
-                        developerConnection.set("scm:git:ssh://github.com:EdmonDantes/simple-kotlinx-serialization-utils.git")
-                        url.set("https://github.com/EdmonDantes/simple-kotlinx-serialization-utils/tree/master")
+                        connection.set("scm:git:git://github.com/EdmonDantes/${project.name}.git")
+                        developerConnection.set("scm:git:ssh://github.com:EdmonDantes/${project.name}.git")
+                        url.set("https://github.com/EdmonDantes/${project.name}/tree/master")
                     }
                 }
 
