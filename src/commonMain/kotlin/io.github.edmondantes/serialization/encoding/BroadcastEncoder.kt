@@ -14,6 +14,7 @@
  */
 package io.github.edmondantes.serialization.encoding
 
+import io.github.edmondantes.serialization.encoding.inline.supportInline
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -118,6 +119,9 @@ public class BroadcastEncoder(private val encoders: List<Encoder>) : Encoder {
                 it.supportCircular(objForSerialization, byHashCode, useRefEquality).apply(configure)
             },
         )
+
+    public fun supportInline(): Encoder =
+        BroadcastEncoder(encoders.map { it.supportInline() })
 
     private inline fun <T> delegate(crossinline func: (Encoder) -> T): List<T> =
         encoders.map(func)

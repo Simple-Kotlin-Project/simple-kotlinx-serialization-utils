@@ -80,6 +80,25 @@ inline fun <reified T> ExpectedEncodedResult<T>.beginStructure(
 }
 
 @OptIn(ExperimentalSerializationApi::class)
+inline fun <reified T> ExpectedEncodedResult<T>.beginCollection(
+    elementName: String? = null,
+    structure: ExpectedEncodedResult<T>.() -> Unit,
+) {
+    val nested = ExpectedEncodedResult<T>()
+    structure(nested)
+    nested.add(TestEncodingElements("endStructure", descriptor<T>().serialName, null, null, null))
+    add(
+        TestEncodingElements(
+            "beginCollection",
+            descriptor<T>().serialName,
+            elementName?.let { descriptor<T>().getElementIndex(it) },
+            elementName,
+            nested,
+        ),
+    )
+}
+
+@OptIn(ExperimentalSerializationApi::class)
 inline fun <reified T> ExpectedEncodedResult<T>.encodeStringElement(elementName: String?, elementValue: Any?) {
     add(
         TestEncodingElements(
@@ -92,7 +111,20 @@ inline fun <reified T> ExpectedEncodedResult<T>.encodeStringElement(elementName:
     )
 }
 
-fun ExpectedEncodedResult<*>.encodeString(elementValue: Any?) {
+@OptIn(ExperimentalSerializationApi::class)
+inline fun <reified T> ExpectedEncodedResult<T>.encodeIntElement(elementName: String?, elementValue: Any?) {
+    add(
+        TestEncodingElements(
+            "encodeIntElement",
+            descriptor<T>().serialName,
+            elementName?.let { descriptor<T>().getElementIndex(it) },
+            elementName,
+            elementValue,
+        ),
+    )
+}
+
+fun <T> ExpectedEncodedResult<T>.encodeString(elementValue: Any?) {
     add(
         TestEncodingElements(
             "encodeString",
@@ -121,10 +153,27 @@ inline fun <reified T, reified R> ExpectedEncodedResult<T>.encodeNullableSeriali
     )
 }
 
-inline fun <reified T> ExpectedEncodedResult<*>.encodeSerializableValue(
-    structure: ExpectedEncodedResult<T>.() -> Unit,
+@OptIn(ExperimentalSerializationApi::class)
+inline fun <reified T, reified R> ExpectedEncodedResult<T>.encodeSerializableElement(
+    elementName: String? = null,
+    structure: ExpectedEncodedResult<R>.() -> Unit,
 ) {
-    val nested = ExpectedEncodedResult<T>().also(structure)
+    val nested = ExpectedEncodedResult<R>().also(structure)
+    add(
+        TestEncodingElements(
+            "encodeSerializableElement",
+            descriptor<T>().serialName,
+            elementName?.let { descriptor<T>().getElementIndex(elementName) },
+            elementName,
+            nested,
+        ),
+    )
+}
+
+inline fun <reified T, reified R> ExpectedEncodedResult<T>.encodeSerializableValue(
+    structure: ExpectedEncodedResult<R>.() -> Unit,
+) {
+    val nested = ExpectedEncodedResult<R>().also(structure)
     add(
         TestEncodingElements(
             "encodeSerializableElement",
@@ -134,6 +183,10 @@ inline fun <reified T> ExpectedEncodedResult<*>.encodeSerializableValue(
             nested,
         ),
     )
+}
+
+inline fun <reified T, reified R> ExpectedEncodedResult<T>.anotherDescriptor(structure: ExpectedEncodedResult<R>.() -> Unit) {
+    (this as ExpectedEncodedResult<R>).also(structure)
 }
 
 inline fun <reified T> ExpectedEncodedResult<T>.encodeNull() {

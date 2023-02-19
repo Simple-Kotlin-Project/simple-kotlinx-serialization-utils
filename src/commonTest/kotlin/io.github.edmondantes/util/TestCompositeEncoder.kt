@@ -89,7 +89,7 @@ class TestCompositeEncoder(
         value: T,
     ) {
         val encoder = encoderConstructor(descriptor, index)
-        addNewElement("encodeNullableSerializableElement", descriptor, index, encoder)
+        addNewElement("encodeSerializableElement", descriptor, index, encoder)
         serializer.serialize(encoder, value)
     }
 

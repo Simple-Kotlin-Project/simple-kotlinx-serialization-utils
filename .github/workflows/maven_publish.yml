@@ -23,13 +23,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-latest
-            gradlew: gradlew
+          #          - os: macos-latest
+          #            gradlew: gradlew
           - os: ubuntu-latest
             gradlew: gradlew
             env: all
-          - os: windows-latest
-            gradlew: gradlew.bat
+    #          - os: windows-latest
+    #            gradlew: gradlew.bat
     runs-on: ${{ matrix.os }}
     steps:
       - name: Print env type
@@ -42,7 +42,7 @@ jobs:
           distribution: 'corretto'
           java-version: '11'
       - name: Publish
-        run: ./${{ matrix.gradlew }} publish -no-daemon --no-parallel --stacktrace
+        run: ./${{ matrix.gradlew }} clean publish -no-daemon --no-parallel --stacktrace
         env:
           ORG_GRADLE_PROJECT_publishRepositoryUrl: ${{ secrets.SONATYPE_URL_PUBLISH_BY_REPOSITORY }}
           ORG_GRADLE_PROJECT_publishRepositoryId: ${{ needs.generate_publish_id.outputs.repository_id }}
