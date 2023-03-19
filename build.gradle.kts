@@ -88,11 +88,6 @@ kotlin {
                         enabled.set(true)
                     }
                 }
-                testTask {
-                    useKarma {
-                        useChrome()
-                    }
-                }
             }
         }
         nodejs()
