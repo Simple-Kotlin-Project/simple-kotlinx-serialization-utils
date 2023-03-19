@@ -20,9 +20,10 @@ public class UniqueEncoderContainer(private val delegate: Encoder, override val 
     UniqueEncoder,
     Encoder by delegate
 
-public fun Encoder.withId(id: String): UniqueEncoder =
-    UniqueEncoderContainer(this, id)
-
-public fun UniqueEncoder.withId(id: String): UniqueEncoder {
-    error("Can not set id for UniqueEncoder")
+public inline fun <reified T : Encoder> T.withId(id: String): UniqueEncoder {
+    if (this is UniqueEncoder) {
+        error("Can not set id for UniqueCompositeEncoder")
+    } else {
+        return UniqueEncoderContainer(this, id)
+    }
 }

@@ -20,9 +20,10 @@ public class UniqueCompositeEncoderContainer(private val delegate: CompositeEnco
     UniqueCompositeEncoder,
     CompositeEncoder by delegate
 
-public fun CompositeEncoder.withId(id: String): UniqueCompositeEncoder =
-    UniqueCompositeEncoderContainer(this, id)
-
-public fun UniqueCompositeEncoder.withId(id: String): UniqueCompositeEncoder {
-    error("Can not set id for UniqueCompositeEncoder")
+public inline fun <reified T : CompositeEncoder> T.withId(id: String): UniqueCompositeEncoder {
+    if (this is UniqueCompositeEncoder) {
+        error("Can not set id for UniqueCompositeEncoder")
+    } else {
+        return UniqueCompositeEncoderContainer(this, id)
+    }
 }

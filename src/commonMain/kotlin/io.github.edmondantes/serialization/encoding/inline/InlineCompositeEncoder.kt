@@ -38,6 +38,7 @@ public class InlineCompositeEncoder(
         inlineDelegate(descriptor, index, serializer, value, delegate::encodeNullableSerializableElement)
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun <T : Any?> encodeSerializableElement(
         descriptor: SerialDescriptor,
         index: Int,
@@ -55,7 +56,7 @@ public class InlineCompositeEncoder(
         }
     }
 
-    private fun <T> inlineDelegate(
+    private inline fun <T : Any?> inlineDelegate(
         descriptor: SerialDescriptor,
         index: Int,
         serializer: SerializationStrategy<T>,

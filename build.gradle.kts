@@ -16,15 +16,15 @@
 plugins {
     signing
     `maven-publish`
-    kotlin("multiplatform") version "1.8.0"
-    kotlin("plugin.serialization") version "1.8.0"
+    kotlin("multiplatform") version "1.8.10"
+    kotlin("plugin.serialization") version "1.8.10"
     id("org.jetbrains.dokka") version "1.7.20"
     id("com.diffplug.spotless") version "6.14.0"
     id("org.jetbrains.kotlinx.kover") version "0.6.1"
 }
 
 val releaseVersion: String by project
-val serializationLibVersion = "1.4.1"
+val serializationLibVersion = "1.5.0"
 
 group = "io.github.edmondantes"
 version = releaseVersion
