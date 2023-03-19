@@ -14,11 +14,12 @@
  */
 package io.github.edmondantes.encoding
 
-import io.github.edmondantes.entity.SimpleTestEntity
+import io.github.edmondantes.entity.TestSimpleEntity
 import io.github.edmondantes.entity.TestCircleEntity
 import io.github.edmondantes.entity.TestEntityWithNested
 import io.github.edmondantes.serialization.encoding.BroadcastEncoder
 import io.github.edmondantes.serialization.encoding.LoggerEncoder
+import io.github.edmondantes.serialization.encoding.supportCircular
 import io.github.edmondantes.util.TestEncoder
 import kotlinx.serialization.serializer
 import kotlin.test.BeforeTest
@@ -37,14 +38,14 @@ class BroadcastEncoderTest {
         val encoders = listOf(TestEncoder("id1"), TestEncoder("id2"))
         val encoder = BroadcastEncoder(encoders + LoggerEncoder())
 
-        val value = SimpleTestEntity(
+        val value = TestSimpleEntity(
             "id",
             "name",
             10,
             listOf("one", "two"),
         )
 
-        serializer<SimpleTestEntity>().serialize(encoder, value)
+        serializer<TestSimpleEntity>().serialize(encoder, value)
 
         assertEquals(encoders[0], encoders[1])
     }
@@ -56,7 +57,7 @@ class BroadcastEncoderTest {
 
         val value = TestEntityWithNested(
             "id123",
-            SimpleTestEntity(
+            TestSimpleEntity(
                 "id",
                 "name",
                 10,

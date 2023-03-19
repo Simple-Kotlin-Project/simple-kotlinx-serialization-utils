@@ -105,7 +105,7 @@ public class BroadcastEncoder(private val encoders: List<Encoder>) : Encoder {
         byHashCode: Boolean = true,
         useRefEquality: Boolean = false,
         configure: CircularEncoder.() -> Unit = {},
-    ): Encoder =
+    ): BroadcastEncoder =
         BroadcastEncoder(encoders.map { it.supportCircular(byHashCode, useRefEquality).apply(configure) })
 
     public fun supportCircular(
@@ -113,14 +113,15 @@ public class BroadcastEncoder(private val encoders: List<Encoder>) : Encoder {
         byHashCode: Boolean = true,
         useRefEquality: Boolean = false,
         configure: CircularEncoder.() -> Unit = {},
-    ): Encoder =
+    ): BroadcastEncoder =
         BroadcastEncoder(
             encoders.map {
                 it.supportCircular(objForSerialization, byHashCode, useRefEquality).apply(configure)
             },
         )
 
-    public fun supportInline(): Encoder =
+    //TODO: Remove this in future release
+    public fun supportInline(): BroadcastEncoder =
         BroadcastEncoder(encoders.map { it.supportInline() })
 
     private inline fun <T> delegate(crossinline func: (Encoder) -> T): List<T> =

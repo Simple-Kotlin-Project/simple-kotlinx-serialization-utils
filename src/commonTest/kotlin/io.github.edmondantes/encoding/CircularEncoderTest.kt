@@ -19,6 +19,7 @@ import io.github.edmondantes.entity.TestCircleEntityWithEquals
 import io.github.edmondantes.entity.TestDataCircleEntity
 import io.github.edmondantes.serialization.encoding.BroadcastEncoder
 import io.github.edmondantes.serialization.encoding.LoggerEncoder
+import io.github.edmondantes.serialization.encoding.supportCircular
 import io.github.edmondantes.util.TestEncoder
 import io.github.edmondantes.util.beginStructure
 import io.github.edmondantes.util.encodeNullableSerializableElement
@@ -172,9 +173,7 @@ class CircularEncoderTest {
 
         val testEncoder = TestEncoder("id1")
         val encoder = BroadcastEncoder(testEncoder, LoggerEncoder())
-            .supportCircular(false, true) {
-                add(value)
-            }
+            .supportCircular(value, false, true)
 
         val expected = expected<TestCircleEntity> {
             beginStructure {

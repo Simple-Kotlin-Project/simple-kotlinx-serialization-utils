@@ -15,7 +15,7 @@
 package io.github.edmondantes.encoding
 
 import io.github.edmondantes.entity.ContextualFilterEntity
-import io.github.edmondantes.entity.FilterEntity
+import io.github.edmondantes.entity.TestFilterEntity
 import io.github.edmondantes.serialization.encoding.BroadcastEncoder
 import io.github.edmondantes.serialization.encoding.LoggerEncoder
 import io.github.edmondantes.serialization.encoding.filterByIdentifier
@@ -38,7 +38,7 @@ class FilterEncoderTest {
         val encoder = BroadcastEncoder(encoders.map { it.filterByIdentifier() } + LoggerEncoder())
 
         val expected = listOf(
-            expected<FilterEntity> {
+            expected<TestFilterEntity> {
                 beginStructure {
                     encodeStringElement("id", ID)
                     encodeStringElement("name", NAME)
@@ -47,7 +47,7 @@ class FilterEncoderTest {
                     }
                 }
             },
-            expected<FilterEntity> {
+            expected<TestFilterEntity> {
                 beginStructure {
                     encodeStringElement("id", ID)
                     encodeStringElement("name", NAME)
@@ -58,7 +58,7 @@ class FilterEncoderTest {
                     }
                 }
             },
-            expected<FilterEntity> {
+            expected<TestFilterEntity> {
                 beginStructure {
                     encodeStringElement("id", ID)
                     encodeStringElement("name", NAME)
@@ -71,7 +71,7 @@ class FilterEncoderTest {
             },
         )
 
-        val value = FilterEntity(
+        val value = TestFilterEntity(
             ID,
             NAME,
             PASSWORD,
@@ -80,7 +80,7 @@ class FilterEncoderTest {
             null,
         )
 
-        serializer<FilterEntity>().serialize(encoder, value)
+        serializer<TestFilterEntity>().serialize(encoder, value)
 
         for (i in 0 until 2) {
             assertTrue(expected[i].equals(encoders[i]))
@@ -93,28 +93,28 @@ class FilterEncoderTest {
         val encoder = BroadcastEncoder(encoders.map { it.filterByIdentifier() } + LoggerEncoder())
 
         val expected = listOf(
-            expected<FilterEntity> {
+            expected<TestFilterEntity> {
                 beginStructure {
                     encodeStringElement("id", ID)
                     encodeStringElement("name", NAME)
-                    encodeNullableSerializableElement<FilterEntity, ContextualFilterEntity>("nestedContextualFilteredEntity") {
+                    encodeNullableSerializableElement<TestFilterEntity, ContextualFilterEntity>("nestedContextualFilteredEntity") {
                         encodeString("test")
                     }
                 }
             },
-            expected<FilterEntity> {
+            expected<TestFilterEntity> {
                 beginStructure {
                     encodeStringElement("id", ID)
                     encodeStringElement("name", NAME)
                     encodeStringElement("transactionId", TRANSACTION_ID)
-                    encodeNullableSerializableElement<FilterEntity, ContextualFilterEntity>("nestedContextualFilteredEntity") {
+                    encodeNullableSerializableElement<TestFilterEntity, ContextualFilterEntity>("nestedContextualFilteredEntity") {
                         encodeString("test")
                     }
                 }
             },
         )
 
-        val value = FilterEntity(
+        val value = TestFilterEntity(
             ID,
             NAME,
             PASSWORD,
@@ -123,7 +123,7 @@ class FilterEncoderTest {
             ContextualFilterEntity("id8", "test"),
         )
 
-        serializer<FilterEntity>().serialize(encoder, value)
+        serializer<TestFilterEntity>().serialize(encoder, value)
 
         for (i in 0 until 2) {
             assertTrue(expected[i].equals(encoders[i]))

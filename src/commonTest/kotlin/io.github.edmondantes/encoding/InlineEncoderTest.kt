@@ -14,12 +14,13 @@
  */
 package io.github.edmondantes.encoding
 
-import io.github.edmondantes.entity.SimpleTestEntity
 import io.github.edmondantes.entity.TestEntityWithInlineClass
 import io.github.edmondantes.entity.TestEntityWithInlineProperty
 import io.github.edmondantes.entity.TestInlineEntity
+import io.github.edmondantes.entity.TestSimpleEntity
 import io.github.edmondantes.serialization.encoding.BroadcastEncoder
 import io.github.edmondantes.serialization.encoding.LoggerEncoder
+import io.github.edmondantes.serialization.encoding.inline.supportInline
 import io.github.edmondantes.util.TestEncoder
 import io.github.edmondantes.util.anotherDescriptor
 import io.github.edmondantes.util.beginCollection
@@ -42,7 +43,7 @@ class InlineEncoderTest {
 
         val value = TestEntityWithInlineProperty(
             "id0",
-            SimpleTestEntity(
+            TestSimpleEntity(
                 "id1",
                 "name",
                 10,
@@ -55,8 +56,8 @@ class InlineEncoderTest {
         val expected = expected<TestEntityWithInlineProperty> {
             beginStructure {
                 encodeStringElement("notInline", "id0")
-                encodeSerializableElement<TestEntityWithInlineProperty, SimpleTestEntity>("inlineProperty") {}
-                anotherDescriptor<TestEntityWithInlineProperty, SimpleTestEntity> {
+                encodeSerializableElement<TestEntityWithInlineProperty, TestSimpleEntity>("inlineProperty") {}
+                anotherDescriptor<TestEntityWithInlineProperty, TestSimpleEntity> {
                     encodeStringElement("id", "id1")
                     encodeStringElement("name", "name")
                     encodeIntElement("index", 10)
