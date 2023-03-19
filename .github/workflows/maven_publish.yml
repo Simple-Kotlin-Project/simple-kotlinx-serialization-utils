@@ -6,7 +6,7 @@ on:
       - 'release/*'
 jobs:
   generate_publish_id:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     name: Create staging repository
     outputs:
       repository_id: ${{ steps.create.outputs.repository_id }}
