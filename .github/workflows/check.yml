@@ -20,4 +20,4 @@ jobs:
       - name: Fetch origin/master
         run: git fetch origin master
       - name: Build
-        run: ./gradlew clean build -no-daemon --no-parallel --stacktrace -DhasBrowser=false
+        run: ./gradlew clean build -no-daemon --no-parallel --stacktrace -PhasBrowser=false
