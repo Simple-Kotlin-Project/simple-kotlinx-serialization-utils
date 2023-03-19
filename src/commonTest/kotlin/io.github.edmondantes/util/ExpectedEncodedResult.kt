@@ -170,21 +170,7 @@ inline fun <reified T, reified R> ExpectedEncodedResult<T>.encodeSerializableEle
     )
 }
 
-inline fun <reified T, reified R> ExpectedEncodedResult<T>.encodeSerializableValue(
-    structure: ExpectedEncodedResult<R>.() -> Unit,
-) {
-    val nested = ExpectedEncodedResult<R>().also(structure)
-    add(
-        TestEncodingElements(
-            "encodeSerializableElement",
-            null,
-            null,
-            null,
-            nested,
-        ),
-    )
-}
-
+@Suppress("UNCHECKED_CAST")
 inline fun <reified T, reified R> ExpectedEncodedResult<T>.anotherDescriptor(structure: ExpectedEncodedResult<R>.() -> Unit) {
     (this as ExpectedEncodedResult<R>).also(structure)
 }
