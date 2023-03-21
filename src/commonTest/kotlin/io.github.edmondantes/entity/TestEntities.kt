@@ -118,13 +118,13 @@ class TestEntityWithFormatProperties(
     @EncodeBy("test")
     val nested: TestSimpleEntity? = null,
     @EncodeBy("test2")
-    val test: String? = null
+    val test: String? = null,
 )
 
 @Serializable
 class TestEntityWithNestedEntityWithFormatProperties(
     val id: String,
-    val nested: TestEntityWithFormatProperties
+    val nested: TestEntityWithFormatProperties,
 )
 
 @Serializable(ContextualFilterEntitySerializer::class)
@@ -169,12 +169,11 @@ class TestBinaryFormat : BinaryFormat {
             tmp.and(0xff000000u).toByte(),
             tmp.and(0xff0000u).toByte(),
             tmp.and(0xff00u).toByte(),
-            tmp.and(0xffu).toByte()
+            tmp.and(0xffu).toByte(),
         )
     }
 
     override fun <T> decodeFromByteArray(deserializer: DeserializationStrategy<T>, bytes: ByteArray): T {
         error("This format doesn't support decoding")
     }
-
 }

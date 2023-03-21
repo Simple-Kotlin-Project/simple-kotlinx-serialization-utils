@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.github.edmondantes.serialization.encoding.format
 
 import kotlinx.serialization.BinaryFormat
@@ -41,22 +40,22 @@ public class FormatEncoder public constructor(
 
     public constructor(defaultEncoder: Encoder, formats: List<Pair<String, EncodeFormat>>) : this(
         defaultEncoder,
-        formats.associate { it }
+        formats.associate { it },
     )
 
     public constructor(defaultEncoder: Encoder, vararg formats: Pair<String, EncodeFormat>) : this(
         defaultEncoder,
-        formats.associate { it }
+        formats.associate { it },
     )
 
     public constructor(defaultEncoder: Encoder, formatId: String, format: StringFormat) : this(
         defaultEncoder,
-        mapOf(formatId to stringFormat(format))
+        mapOf(formatId to stringFormat(format)),
     )
 
     public constructor(defaultEncoder: Encoder, formatId: String, format: BinaryFormat) : this(
         defaultEncoder,
-        mapOf(formatId to binaryFormat(format))
+        mapOf(formatId to binaryFormat(format)),
     )
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {

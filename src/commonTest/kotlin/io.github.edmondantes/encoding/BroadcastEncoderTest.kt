@@ -14,12 +14,11 @@
  */
 package io.github.edmondantes.encoding
 
-import io.github.edmondantes.entity.TestSimpleEntity
 import io.github.edmondantes.entity.TestCircleEntity
 import io.github.edmondantes.entity.TestEntityWithNested
+import io.github.edmondantes.entity.TestSimpleEntity
 import io.github.edmondantes.serialization.encoding.BroadcastEncoder
 import io.github.edmondantes.serialization.encoding.LoggerEncoder
-import io.github.edmondantes.serialization.encoding.supportCircular
 import io.github.edmondantes.util.TestEncoder
 import kotlinx.serialization.serializer
 import kotlin.test.BeforeTest

@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.github.edmondantes.serialization.descriptors
 
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -53,7 +52,7 @@ public class CollectionDescriptor(override val serialName: String, private val e
 
     @ExperimentalSerializationApi
     override fun isElementOptional(index: Int): Boolean {
-        require(index >= 0) { "Illegal index $index, $serialName expects only non-negative indices"}
+        require(index >= 0) { "Illegal index $index, $serialName expects only non-negative indices" }
         return false
     }
 

@@ -120,7 +120,7 @@ public class BroadcastEncoder(private val encoders: List<Encoder>) : Encoder {
             },
         )
 
-    //TODO: Remove this in future release
+    // TODO: Remove this in future release
     public fun supportInline(): BroadcastEncoder =
         BroadcastEncoder(encoders.map { it.supportInline() })
 

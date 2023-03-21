@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.github.edmondantes.encoding
 
 import io.github.edmondantes.entity.TestBinaryFormat
@@ -48,7 +47,6 @@ class FormatEncoderTest {
             .supportFormat("test2", TestStringFormat())
 
         val entity = TestEntityWithFormatProperties("id", null, "test")
-
 
         serializer<TestEntityWithFormatProperties>().serialize(encoder, entity)
 
@@ -102,7 +100,6 @@ class FormatEncoderTest {
         val nested = TestSimpleEntity("id0", "name", 0, emptyList())
         val entity = TestEntityWithFormatProperties("id", nested, "test")
 
-
         serializer<TestEntityWithFormatProperties>().serialize(encoder, entity)
 
         val expected = expected<TestEntityWithFormatProperties> {
@@ -127,7 +124,6 @@ class FormatEncoderTest {
             .supportFormat("test2", TestBinaryFormat())
 
         val entity = TestEntityWithFormatProperties("id", null, "test")
-
 
         serializer<TestEntityWithFormatProperties>().serialize(encoder, entity)
 
@@ -191,7 +187,6 @@ class FormatEncoderTest {
         val nested = TestSimpleEntity("id0", "name", 0, emptyList())
         val entity = TestEntityWithFormatProperties("id", nested, "test")
 
-
         serializer<TestEntityWithFormatProperties>().serialize(encoder, entity)
 
         val expected = expected<TestEntityWithFormatProperties> {
@@ -227,7 +222,7 @@ class FormatEncoderTest {
 
         val entity = TestEntityWithNestedEntityWithFormatProperties(
             "id1",
-            TestEntityWithFormatProperties("id", null, "test")
+            TestEntityWithFormatProperties("id", null, "test"),
         )
 
         serializer<TestEntityWithNestedEntityWithFormatProperties>().serialize(encoder, entity)
@@ -260,7 +255,7 @@ class FormatEncoderTest {
 
         val entity = TestEntityWithNestedEntityWithFormatProperties(
             "id1",
-            TestEntityWithFormatProperties("id", null, "test")
+            TestEntityWithFormatProperties("id", null, "test"),
         )
 
         serializer<TestEntityWithNestedEntityWithFormatProperties>().serialize(encoder, entity)
@@ -289,5 +284,4 @@ class FormatEncoderTest {
 
         assertTrue(expected.equals(encoders[0]))
     }
-
 }

@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.github.edmondantes.serialization.encoding.format
 
 import io.github.edmondantes.serialization.annotation.EncodeBy
@@ -84,7 +83,7 @@ public class FormatCompositeEncoder internal constructor(
         descriptor: SerialDescriptor,
         index: Int,
         serializer: SerializationStrategy<T>,
-        value: T?
+        value: T?,
     ) {
         val defaultAction =
             {
@@ -92,7 +91,7 @@ public class FormatCompositeEncoder internal constructor(
                     descriptor,
                     index,
                     CustomSerializationStrategy(serializer) { FormatEncoder(it, formats) },
-                    value
+                    value,
                 )
             }
 
@@ -103,19 +102,19 @@ public class FormatCompositeEncoder internal constructor(
         descriptor: SerialDescriptor,
         index: Int,
         serializer: SerializationStrategy<T>,
-        value: T
+        value: T,
     ) {
         encodeSerializableElement(
             descriptor,
             index,
             serializer,
-            value
+            value,
         ) {
             defaultCompositeEncoder.encodeSerializableElement(
                 descriptor,
                 index,
                 CustomSerializationStrategy(serializer) { FormatEncoder(it, formats) },
-                value
+                value,
             )
         }
     }
@@ -125,7 +124,7 @@ public class FormatCompositeEncoder internal constructor(
         index: Int,
         serializer: SerializationStrategy<T>,
         value: T,
-        defaultAction: () -> Unit
+        defaultAction: () -> Unit,
     ) {
         val (id, format) = getFormat(descriptor, index)
             ?: return defaultAction()
@@ -134,14 +133,14 @@ public class FormatCompositeEncoder internal constructor(
             format,
             value,
             { format -> format.encodeToString(serializer, value) },
-            { format -> format.encodeToByteArray(serializer, value) }
+            { format -> format.encodeToByteArray(serializer, value) },
         ) ?: error("Format with id '$id' has not one of field 'stringFormat' or 'binaryFormat'")
 
         defaultCompositeEncoder.encodeSerializableElement(
             descriptor,
             index,
             formatSerializer as SerializationStrategy<Any>,
-            formatValue
+            formatValue,
         )
     }
 
@@ -153,7 +152,7 @@ public class FormatCompositeEncoder internal constructor(
         descriptor: SerialDescriptor,
         index: Int,
         value: T,
-        defaultAction: (SerialDescriptor, Int, T) -> Unit
+        defaultAction: (SerialDescriptor, Int, T) -> Unit,
     ) {
         val (id, format) = getFormat(descriptor, index) ?: return defaultAction(descriptor, index, value)
 
@@ -161,7 +160,7 @@ public class FormatCompositeEncoder internal constructor(
             format,
             value,
             { format -> format.encodeToString(value) },
-            { format -> format.encodeToByteArray(value) }
+            { format -> format.encodeToByteArray(value) },
         )
             ?: error("Format with id '$id' has not one of field 'stringFormat' or 'binaryFormat'")
 
@@ -169,7 +168,7 @@ public class FormatCompositeEncoder internal constructor(
             descriptor,
             index,
             serializer as SerializationStrategy<Any>,
-            formatValue
+            formatValue,
         )
     }
 
@@ -177,7 +176,7 @@ public class FormatCompositeEncoder internal constructor(
         format: EncodeFormat,
         value: T,
         stringEncodeAction: (StringFormat) -> String,
-        binaryEncodeAction: (BinaryFormat) -> ByteArray
+        binaryEncodeAction: (BinaryFormat) -> ByteArray,
     ): Pair<Any, SerializationStrategy<*>>? {
         return format.stringFormat?.let { stringEncodeAction(it) }?.let { it to STRING_SERIALIZER }
             ?: format.binaryFormat?.let { binaryEncodeAction(it) }?.let { it to BYTE_ARRAY_SERIALIZER }
@@ -197,5 +196,4 @@ public class FormatCompositeEncoder internal constructor(
         val STRING_SERIALIZER = serializer<String>()
         val BYTE_ARRAY_SERIALIZER = serializer<ByteArray>()
     }
-
 }
