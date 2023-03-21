@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.cli.common.toBooleanLenient
+
 /*
  * Copyright (c) 2023. Ilia Loginov
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,10 +80,13 @@ kotlin {
         }
     }
     js(IR) {
-        browser {
-            commonWebpackConfig {
-                cssSupport {
-                    enabled.set(true)
+        val hasBrowser: String by project
+        if (hasBrowser.toBooleanLenient() == true) {
+            browser {
+                commonWebpackConfig {
+                    cssSupport {
+                        enabled.set(true)
+                    }
                 }
             }
         }
