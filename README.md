@@ -15,14 +15,14 @@ Small library which provide some utilities for [koltinx.serialization](https://g
 <dependency>
     <groupId>io.github.edmondantes</groupId>
     <artifactId>simple-kotlinx-serialization-utils</artifactId>
-    <version>0.4.0</version>
+    <version>0.4.1</version>
 </dependency>
 ```
 #### Gradle (kotlin)
 ```kotlin
-implementation("io.github.edmondantes:simple-kotlinx-serialization-utils:0.4.0")
+implementation("io.github.edmondantes:simple-kotlinx-serialization-utils:0.4.1")
 ```
 #### Gradle (groovy)
 ```groovy
-implementation "io.github.edmondantes:simple-kotlinx-serialization-utils:0.4.0"
+implementation "io.github.edmondantes:simple-kotlinx-serialization-utils:0.4.1"
 ```

@@ -2,8 +2,8 @@ name: maven publish
 
 on:
   push:
-    branches:
-      - 'release/*'
+    tags:
+      - 'v@*'
 jobs:
   generate_publish_id:
     runs-on: ubuntu-latest
@@ -23,13 +23,13 @@ jobs:
     strategy:
       matrix:
         include:
-          #          - os: macos-latest
-          #            gradlew: gradlew
+          - os: macos-latest
+            gradlew: gradlew
           - os: self-hosted
             gradlew: gradlew
             env: all
-    #          - os: windows-latest
-    #            gradlew: gradlew.bat
+          - os: windows-latest
+            gradlew: gradlew.bat
     runs-on: ${{ matrix.os }}
     steps:
       - name: Print env type

@@ -23,13 +23,14 @@ plugins {
     id("org.jetbrains.dokka") version "1.7.20"
     id("com.diffplug.spotless") version "6.14.0"
     id("org.jetbrains.kotlinx.kover") version "0.6.1"
+    id("com.palantir.git-version") version "3.0.0"
 }
 
-val releaseVersion: String by project
 val serializationLibVersion = "1.5.0"
+val gitVersion: groovy.lang.Closure<String> by extra
 
 group = "io.github.edmondantes"
-version = releaseVersion
+version = gitVersion(mapOf("prefix" to "v@"))
 
 java.targetCompatibility = JavaVersion.VERSION_1_8
 
@@ -96,9 +97,9 @@ kotlin {
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")
     when {
-        hostOs == "Mac OS X" -> macosX64("native")
-        hostOs == "Linux" -> linuxX64("native")
-        isMingwX64 -> mingwX64("native")
+        hostOs == "Mac OS X" -> macosX64("macosX64")
+        hostOs == "Linux" -> linuxX64("linuxX64")
+        isMingwX64 -> mingwX64("mingwX64")
         else -> throw GradleException("Host OS is not supported for this project")
     }
 
@@ -164,7 +165,7 @@ kotlin {
                 }
 
                 groupId = project.group.toString()
-                version = releaseVersion
+                version = project.version.toString()
 
                 with(pom) {
                     name.set("Simple kotlinx serialization utils")
