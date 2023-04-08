@@ -119,6 +119,15 @@ public class FormatCompositeEncoder internal constructor(
         }
     }
 
+    override fun endStructure(descriptor: SerialDescriptor) {
+        defaultCompositeEncoder.endStructure(descriptor)
+    }
+
+    /**
+     * Please don't try to merge this method to one below, because we can not use inline and reified
+     * in methods encodeSerializableElement and encodeNullableSerializableElement
+     */
+    @Suppress("UNCHECKED_CAST")
     private fun <T> encodeSerializableElement(
         descriptor: SerialDescriptor,
         index: Int,
@@ -126,12 +135,11 @@ public class FormatCompositeEncoder internal constructor(
         value: T,
         defaultAction: () -> Unit,
     ) {
-        val (id, format) = getFormat(descriptor, index)
+        val (id, seriazableFormat) = getFormat(descriptor, index)
             ?: return defaultAction()
 
         val (formatValue, formatSerializer) = encode(
-            format,
-            value,
+            seriazableFormat,
             { format -> format.encodeToString(serializer, value) },
             { format -> format.encodeToByteArray(serializer, value) },
         ) ?: error("Format with id '$id' has not one of field 'stringFormat' or 'binaryFormat'")
@@ -144,21 +152,17 @@ public class FormatCompositeEncoder internal constructor(
         )
     }
 
-    override fun endStructure(descriptor: SerialDescriptor) {
-        defaultCompositeEncoder.endStructure(descriptor)
-    }
-
+    @Suppress("UNCHECKED_CAST")
     private inline fun <reified T> encode(
         descriptor: SerialDescriptor,
         index: Int,
         value: T,
         defaultAction: (SerialDescriptor, Int, T) -> Unit,
     ) {
-        val (id, format) = getFormat(descriptor, index) ?: return defaultAction(descriptor, index, value)
+        val (id, formatSerializer) = getFormat(descriptor, index) ?: return defaultAction(descriptor, index, value)
 
         val (formatValue, serializer) = encode(
-            format,
-            value,
+            formatSerializer,
             { format -> format.encodeToString(value) },
             { format -> format.encodeToByteArray(value) },
         )
@@ -172,9 +176,8 @@ public class FormatCompositeEncoder internal constructor(
         )
     }
 
-    private inline fun <T> encode(
+    private inline fun encode(
         format: EncodeFormat,
-        value: T,
         stringEncodeAction: (StringFormat) -> String,
         binaryEncodeAction: (BinaryFormat) -> ByteArray,
     ): Pair<Any, SerializationStrategy<*>>? {
