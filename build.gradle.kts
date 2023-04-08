@@ -68,30 +68,33 @@ val javadocJar: TaskProvider<Jar> by tasks.registering(Jar::class) {
     from(dokkaHtml.outputDirectory)
 }
 
+val isMainHost: Boolean = findProperty("isMainHost")?.toString()?.toBoolean() == true
+
 kotlin {
     explicitApi()
-
-    jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
+    if (isMainHost) {
+        jvm {
+            compilations.all {
+                kotlinOptions.jvmTarget = "1.8"
+            }
+            withJava()
+            testRuns["test"].executionTask.configure {
+                useJUnitPlatform()
+            }
         }
-        withJava()
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
-        }
-    }
-    js(IR) {
-        val hasBrowser: String by project
-        if (hasBrowser.toBooleanLenient() == true) {
-            browser {
-                commonWebpackConfig {
-                    cssSupport {
-                        enabled.set(true)
+        js(IR) {
+            val hasBrowser: String by project
+            if (hasBrowser.toBooleanLenient() == true) {
+                browser {
+                    commonWebpackConfig {
+                        cssSupport {
+                            enabled.set(true)
+                        }
                     }
                 }
             }
+            nodejs()
         }
-        nodejs()
     }
 
     val hostOs = System.getProperty("os.name")
@@ -116,9 +119,6 @@ kotlin {
             }
         }
     }
-
-    val publicationsFromMainHost =
-        listOf(jvm(), js()).map { it.name } + "kotlinMultiplatform"
 
     publishing {
         repositories {
@@ -151,17 +151,15 @@ kotlin {
             }
         }
         publications {
-            val isMainHost: Boolean? = findProperty("isMainHost")?.toString()?.toBoolean()
-
             val keyId = findProperty("signingKeyId") as String?
             val privateKey = findProperty("signingPrivateKey") as String?
             val password = findProperty("signingPassword") as String?
 
             withType<MavenPublication>().all {
-                if (name in publicationsFromMainHost) {
+                if (name == "kotlinMultiplatform") {
                     tasks.withType<AbstractPublishToMaven>()
                         .matching { it.publication == this }
-                        .configureEach { onlyIf { isMainHost == true } }
+                        .configureEach { onlyIf { isMainHost } }
                 }
 
                 groupId = project.group.toString()
