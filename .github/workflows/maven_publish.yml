@@ -42,7 +42,7 @@ jobs:
           distribution: 'corretto'
           java-version: '11'
       - name: Publish
-        run: ./${{ matrix.gradlew }} clean publish -no-daemon --no-parallel --stacktrace -PhasBrowser=false
+        run: ./${{ matrix.gradlew }} clean publish --no-daemon --no-parallel --stacktrace -PhasBrowser=false
         env:
           ORG_GRADLE_PROJECT_publishRepositoryUrl: ${{ secrets.SONATYPE_URL_PUBLISH_BY_REPOSITORY }}
           ORG_GRADLE_PROJECT_publishRepositoryId: ${{ needs.generate_publish_id.outputs.repository_id }}
