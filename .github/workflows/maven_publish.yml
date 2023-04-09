@@ -28,8 +28,6 @@ jobs:
           - os: self-hosted
             gradlew: gradlew
             env: all
-          - os: windows-latest
-            gradlew: gradlew.bat
     runs-on: ${{ matrix.os }}
     steps:
       - name: Print env type
