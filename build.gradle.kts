@@ -246,4 +246,5 @@ tasks.register("disableTestLogging") {
 
 tasks.withType<Test> {
     dependsOn("disableTestLogging")
+    finalizedBy("enableTestLogging")
 }

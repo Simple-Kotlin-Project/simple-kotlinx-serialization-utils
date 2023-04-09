@@ -4,7 +4,6 @@ build/
 !**/src/commonTest/**/build/
 /logging/
 /kotlin-js-store/
-/src/commonTest/kotlin/env/
 
 ### STS ###
 .apt_generated
