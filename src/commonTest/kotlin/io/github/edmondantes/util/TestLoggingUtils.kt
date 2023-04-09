@@ -12,13 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.edmondantes.util
 
-rootProject.name = "simple-kotlinx-serialization-utils"
+import env.Env
+import io.github.edmondantes.serialization.encoding.LoggerEncoder
 
-pluginManagement {
-    val kotlinVersion: String = settings.extra["kotlin.version"]?.toString() ?: error("Can not find 'kotlin.version' property")
-    plugins {
-        id("org.jetbrains.kotlin.multiplatform") version kotlinVersion
-        id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
+fun loggerEncoder(): LoggerEncoder =
+    if (Env.isEnableLogging) {
+        LoggerEncoder()
+    } else {
+        LoggerEncoder({})
     }
-}

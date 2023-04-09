@@ -1,9 +1,10 @@
 .gradle
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+!**/src/commonMain/**/build/
+!**/src/commonTest/**/build/
 /logging/
 /kotlin-js-store/
+/src/commonTest/kotlin/env/
 
 ### STS ###
 .apt_generated
@@ -35,3 +36,4 @@ out/
 
 ### VS Code ###
 .vscode/
+

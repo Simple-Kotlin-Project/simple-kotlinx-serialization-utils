@@ -12,13 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.edmondantes.serialization.annotation
 
-rootProject.name = "simple-kotlinx-serialization-utils"
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialInfo
 
-pluginManagement {
-    val kotlinVersion: String = settings.extra["kotlin.version"]?.toString() ?: error("Can not find 'kotlin.version' property")
-    plugins {
-        id("org.jetbrains.kotlin.multiplatform") version kotlinVersion
-        id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
-    }
-}
+@SerialInfo
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.CLASS)
+@OptIn(ExperimentalSerializationApi::class)
+public annotation class InlineSerialization
