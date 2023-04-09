@@ -18,15 +18,14 @@ import org.jetbrains.kotlin.cli.common.toBooleanLenient
 plugins {
     signing
     `maven-publish`
-    kotlin("multiplatform") version "1.8.10"
-    kotlin("plugin.serialization") version "1.8.10"
-    id("org.jetbrains.dokka") version "1.7.20"
-    id("com.diffplug.spotless") version "6.14.0"
+    kotlin("multiplatform")
+    kotlin("plugin.serialization")
+    id("org.jetbrains.dokka") version "1.8.10"
+    id("com.diffplug.spotless") version "6.18.0"
     id("org.jetbrains.kotlinx.kover") version "0.6.1"
     id("com.palantir.git-version") version "3.0.0"
 }
 
-val serializationLibVersion = "1.5.0"
 val gitVersion: groovy.lang.Closure<String> by extra
 
 group = "io.github.edmondantes"
@@ -68,7 +67,7 @@ val javadocJar: TaskProvider<Jar> by tasks.registering(Jar::class) {
     from(dokkaHtml.outputDirectory)
 }
 
-val isMainHost: Boolean = findProperty("isMainHost")?.toString()?.toBoolean() == true
+val isMainHost: Boolean = extra["publication.only.platform"]?.toString()?.toBooleanStrictOrNull() != true
 
 kotlin {
     explicitApi()
@@ -83,8 +82,8 @@ kotlin {
             }
         }
         js(IR) {
-            val hasBrowser: String by project
-            if (hasBrowser.toBooleanLenient() == true) {
+            val hasBrowser: Boolean = extra["kotlin.js.browser.enable"]?.toString()?.toBooleanLenient() == true
+            if (hasBrowser) {
                 browser {
                     commonWebpackConfig {
                         cssSupport {
@@ -100,17 +99,31 @@ kotlin {
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")
     when {
-        hostOs == "Mac OS X" -> macosX64("macosX64")
-        hostOs == "Linux" -> linuxX64("linuxX64")
-        isMingwX64 -> mingwX64("mingwX64")
+        hostOs == "Mac OS X" -> {
+            macosX64("macosX64")
+            iosArm64("iosArm64")
+            iosX64("iosX64")
+        }
+
+        hostOs == "Linux" -> {
+            linuxX64("linuxX64")
+            linuxArm64("linuxArm64")
+        }
+
+        isMingwX64 -> {
+            mingwX64()
+        }
+
         else -> throw GradleException("Host OS is not supported for this project")
     }
 
+    val kotlinSerializationVersion: String = extra["kotlin.serialization.version"]?.toString()
+        ?: error("Can not get 'kotlin.serialization.version'")
 
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:$serializationLibVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinSerializationVersion")
             }
         }
         val commonTest by getting {
@@ -119,85 +132,91 @@ kotlin {
             }
         }
     }
+}
 
-    publishing {
-        repositories {
-            maven {
-                val publishRepositoryId: String? by project
-                val publishRepositoryUrl: String? by project
+signing {
+    val keyId = findProperty("signingKeyId") as String?
+    val privateKey = findProperty("signingPrivateKey") as String?
+    val password = findProperty("signingPassword") as String?
+    if (!keyId.isNullOrBlank() && !privateKey.isNullOrBlank() && !password.isNullOrBlank()) {
+        useInMemoryPgpKeys(keyId, privateKey, password)
+        sign(publishing.publications)
+    }
+}
 
-                val resultUrl =
-                    if (publishRepositoryUrl.isNullOrBlank() || publishRepositoryId.isNullOrBlank()) {
-                        publishRepositoryUrl.orEmpty().ifEmpty { "./build/repo/" }
-                    } else {
-                        var resolvedUrl = publishRepositoryUrl.orEmpty().ifEmpty { "./build/repo/" }
-                        if (!resolvedUrl.endsWith('/') && !publishRepositoryId!!.startsWith('/')) {
-                            resolvedUrl += '/'
-                        }
+// Added because it is issue: https://youtrack.jetbrains.com/issue/KT-46466
+val signingTasks = tasks.withType<Sign>()
+tasks.withType<AbstractPublishToMaven>().configureEach {
+    dependsOn(signingTasks)
+}
 
-                        resolvedUrl + publishRepositoryId
+publishing {
+    publications {
+        withType<MavenPublication>().all {
+            if (name == "kotlinMultiplatform") {
+                tasks.withType<AbstractPublishToMaven>()
+                    .matching { it.publication == this }
+                    .configureEach { onlyIf("If it is main host for all mainly publications") { isMainHost } }
+            }
+
+            groupId = project.group.toString()
+            version = project.version.toString()
+
+            with(pom) {
+                name.set("Simple kotlinx serialization utils")
+                description.set("Small library which provide some utilities for koltinx.serialization")
+                url.set("https://github.com/EdmonDantes/${project.name}")
+                developers {
+                    developer {
+                        name.set("Ilia Loginov")
+                        email.set("masaqaz40@gmail.com")
+                        organization.set("github")
+                        organizationUrl.set("https://www.github.com")
                     }
-
-                url = uri(resultUrl)
-
-                val username = project.findProperty("sonatypeUsername") as String?
-                val password = project.findProperty("sonatypePassword") as String?
-                if (!username.isNullOrEmpty() && !password.isNullOrEmpty()) {
-                    credentials {
-                        this.username = username
-                        this.password = password
+                }
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                     }
+                }
+                scm {
+                    connection.set("scm:git:git://github.com/EdmonDantes/${project.name}.git")
+                    developerConnection.set("scm:git:ssh://github.com:EdmonDantes/${project.name}.git")
+                    url.set("https://github.com/EdmonDantes/${project.name}/tree/master")
                 }
             }
+
+            artifact(javadocJar)
         }
-        publications {
-            val keyId = findProperty("signingKeyId") as String?
-            val privateKey = findProperty("signingPrivateKey") as String?
-            val password = findProperty("signingPassword") as String?
+    }
 
-            withType<MavenPublication>().all {
-                if (name == "kotlinMultiplatform") {
-                    tasks.withType<AbstractPublishToMaven>()
-                        .matching { it.publication == this }
-                        .configureEach { onlyIf { isMainHost } }
+    repositories {
+        maven {
+            val publishRepositoryId: String? by project
+            val publishRepositoryUrl: String? by project
+
+            val resultUrl =
+                if (publishRepositoryUrl.isNullOrBlank() || publishRepositoryId.isNullOrBlank()) {
+                    publishRepositoryUrl.orEmpty().ifEmpty { "./build/repo/" }
+                } else {
+                    var resolvedUrl = publishRepositoryUrl.orEmpty().ifEmpty { "./build/repo/" }
+                    if (!resolvedUrl.endsWith('/') && !publishRepositoryId!!.startsWith('/')) {
+                        resolvedUrl += '/'
+                    }
+
+                    resolvedUrl + publishRepositoryId
                 }
 
-                groupId = project.group.toString()
-                version = project.version.toString()
+            url = uri(resultUrl)
 
-                with(pom) {
-                    name.set("Simple kotlinx serialization utils")
-                    description.set("Small library which provide some utilities for koltinx.serialization")
-                    url.set("https://github.com/EdmonDantes/${project.name}")
-                    developers {
-                        developer {
-                            name.set("Ilia Loginov")
-                            email.set("masaqaz40@gmail.com")
-                            organization.set("github")
-                            organizationUrl.set("https://www.github.com")
-                        }
-                    }
-                    licenses {
-                        license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                        }
-                    }
-                    scm {
-                        connection.set("scm:git:git://github.com/EdmonDantes/${project.name}.git")
-                        developerConnection.set("scm:git:ssh://github.com:EdmonDantes/${project.name}.git")
-                        url.set("https://github.com/EdmonDantes/${project.name}/tree/master")
-                    }
+            val username = project.findProperty("sonatypeUsername") as String?
+            val password = project.findProperty("sonatypePassword") as String?
+            if (!username.isNullOrEmpty() && !password.isNullOrEmpty()) {
+                credentials {
+                    this.username = username
+                    this.password = password
                 }
-
-                if (!keyId.isNullOrBlank() && !privateKey.isNullOrBlank() && !password.isNullOrBlank()) {
-                    signing {
-                        useInMemoryPgpKeys(keyId, privateKey, password)
-                        sign(this@all)
-                    }
-                }
-
-                artifact(javadocJar)
             }
         }
     }
@@ -205,4 +224,26 @@ kotlin {
 
 tasks.withType<Delete> {
     delete += listOf("$projectDir/kotlin-js-store")
+}
+
+tasks.register("enableTestLogging") {
+    group = "testEnv"
+    doLast {
+        val envFile = file("src/commonTest/kotlin/env/Env.kt")
+        val text = envFile.readText()
+        envFile.writeText(text.replace(Regex(".*isEnableLogging.*"), "    val isEnableLogging: Boolean = true"))
+    }
+}
+
+tasks.register("disableTestLogging") {
+    group = "testEnv"
+    doLast {
+        val envFile = file("src/commonTest/kotlin/env/Env.kt")
+        val text = envFile.readText()
+        envFile.writeText(text.replace(Regex(".*isEnableLogging.*"), "    val isEnableLogging: Boolean = false"))
+    }
+}
+
+tasks.withType<Test> {
+    dependsOn("disableTestLogging")
 }

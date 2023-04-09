@@ -12,13 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package env
 
-rootProject.name = "simple-kotlinx-serialization-utils"
+// WARNING!!!!!
+// Please don't change or delete this file
+// It is used for set environment variables for kmm project by gradle
 
-pluginManagement {
-    val kotlinVersion: String = settings.extra["kotlin.version"]?.toString() ?: error("Can not find 'kotlin.version' property")
-    plugins {
-        id("org.jetbrains.kotlin.multiplatform") version kotlinVersion
-        id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
-    }
+// PLEASE: rollback all changes for this file
+
+object Env {
+    val isEnableLogging: Boolean = true
 }
