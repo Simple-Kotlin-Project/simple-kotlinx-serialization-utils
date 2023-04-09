@@ -21,16 +21,10 @@ import io.github.edmondantes.serialization.encoding.BroadcastEncoder
 import io.github.edmondantes.util.TestEncoder
 import io.github.edmondantes.util.loggerEncoder
 import kotlinx.serialization.serializer
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class BroadcastEncoderTest {
-
-    @BeforeTest
-    fun init() {
-        println()
-    }
 
     @Test
     fun testSimpleEntity() {
