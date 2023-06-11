@@ -2,8 +2,10 @@ name: check
 
 on:
   push:
-    branches-ignore:
-      'release/**'
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
 
 jobs:
   build:
@@ -20,4 +22,4 @@ jobs:
       - name: Fetch origin/master
         run: git fetch origin master
       - name: Build
-        run: ./gradlew clean build --no-daemon --no-parallel --stacktrace
+        run: ./gradlew -Psimple.kmm.spotless.ratchet.git.branch=origin/master clean build --no-daemon --no-parallel --stacktrace

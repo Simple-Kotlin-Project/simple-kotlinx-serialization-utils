@@ -16,9 +16,15 @@
 rootProject.name = "simple-kotlinx-serialization-utils"
 
 pluginManagement {
-    val kotlinVersion: String = settings.extra["kotlin.version"]?.toString() ?: error("Can not find 'kotlin.version' property")
+    repositories {
+        maven {
+            name = "localPluginRepository"
+            url = uri("../local-plugin-repository")
+        }
+        gradlePluginPortal()
+    }
+
     plugins {
-        id("org.jetbrains.kotlin.multiplatform") version kotlinVersion
-        id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
+        id("io.github.edmondantes.simple.kmm.gradle.plugin") version ("0.3.3")
     }
 }
