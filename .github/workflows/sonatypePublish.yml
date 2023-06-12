@@ -39,8 +39,8 @@ jobs:
         with:
           distribution: 'corretto'
           java-version: '11'
-      - name: Fetch origin/master
-        run: git fetch origin master
+      - name: Fetch project
+        run: git fetch --all -f -P -p
       - name: Publish
         run: |
           ./${{ matrix.gradlew }} \
