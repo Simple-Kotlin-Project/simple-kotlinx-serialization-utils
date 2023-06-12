@@ -18,6 +18,8 @@ plugins {
     id("io.github.edmondantes.simple.kmm.gradle.plugin")
 }
 
+group = "io.github.edmondantes"
+
 kotlin {
     sourceSets {
         val kotlinSerializationVersion: String by gradleProperty { }

@@ -25,6 +25,6 @@ pluginManagement {
     }
 
     plugins {
-        id("io.github.edmondantes.simple.kmm.gradle.plugin") version ("0.3.3")
+        id("io.github.edmondantes.simple.kmm.gradle.plugin") version ("0.3.4")
     }
 }
