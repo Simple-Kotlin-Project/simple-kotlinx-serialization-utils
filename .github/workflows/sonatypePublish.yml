@@ -25,6 +25,8 @@ jobs:
         include:
           - os: macos-latest
             gradlew: gradlew
+          - os: windows-latest
+            gradlew: gradlew.bat
           - os: ubuntu-latest
             gradlew: gradlew
             env: all
