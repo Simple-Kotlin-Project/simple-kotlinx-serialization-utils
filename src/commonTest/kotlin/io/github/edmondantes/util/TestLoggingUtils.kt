@@ -15,7 +15,12 @@
 package io.github.edmondantes.util
 
 import env.Env
+import io.github.edmondantes.serialization.encoding.BroadcastEncoder
 import io.github.edmondantes.serialization.encoding.LoggerEncoder
+import io.github.edmondantes.serialization.util.AppendableWithIndent
+import io.github.edmondantes.serialization.util.DelegateAppendableWithIndent
+import io.github.edmondantes.serialization.util.serialize
+import kotlinx.serialization.encoding.Encoder
 
 fun loggerEncoder(): LoggerEncoder =
     if (Env.isEnableLogging) {
@@ -23,3 +28,23 @@ fun loggerEncoder(): LoggerEncoder =
     } else {
         LoggerEncoder({})
     }
+
+fun log(msg: String) {
+    if (Env.isEnableLogging) {
+        println(msg)
+    }
+}
+
+fun log(block: AppendableWithIndent.() -> Unit) {
+    if (Env.isEnableLogging) {
+        val builder = StringBuilder()
+        DelegateAppendableWithIndent(builder).block()
+        println(builder.toString())
+    }
+}
+
+inline fun <reified T> T.serializeWithLog(vararg encoders: Encoder, block: BroadcastEncoder.() -> Encoder = { this }) =
+    serializeWithLog(encoders.toList(), block)
+
+inline fun <reified T> T.serializeWithLog(encoders: List<Encoder>, block: BroadcastEncoder.() -> Encoder = { this }) =
+    serialize(encoders + loggerEncoder(), block)

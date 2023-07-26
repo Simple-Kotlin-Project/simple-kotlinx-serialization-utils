@@ -17,149 +17,105 @@ package io.github.edmondantes.encoding
 import io.github.edmondantes.entity.TestCircleEntity
 import io.github.edmondantes.entity.TestCircleEntityWithEquals
 import io.github.edmondantes.entity.TestDataCircleEntity
-import io.github.edmondantes.serialization.encoding.BroadcastEncoder
-import io.github.edmondantes.util.TestEncoder
-import io.github.edmondantes.util.beginStructure
-import io.github.edmondantes.util.encodeNullableSerializableElement
-import io.github.edmondantes.util.encodeStringElement
-import io.github.edmondantes.util.expected
-import io.github.edmondantes.util.loggerEncoder
-import kotlinx.serialization.serializer
+import io.github.edmondantes.serialization.encoding.element.ElementEncoder
+import io.github.edmondantes.serialization.encoding.element.factory.element
+import io.github.edmondantes.serialization.encoding.element.factory.structureElement
+import io.github.edmondantes.util.assertEquals
+import io.github.edmondantes.util.serializeWithLog
 import kotlin.test.Test
-import kotlin.test.assertTrue
 
 class CircularEncoderTest {
 
     @Test
     fun testCircularWithoutHashCodeAndWithRefEquality() {
-        val testEncoder = TestEncoder("id1")
-        val encoder = BroadcastEncoder(testEncoder, loggerEncoder())
-            .supportCircular(byHashCode = false, useRefEquality = true)
+        val encoder = ElementEncoder("id1")
 
-        val value = TestCircleEntity("id0", null).also { value ->
+        TestCircleEntity("id0", null).also { value ->
             value.nested = TestCircleEntity("id1", null).apply {
                 nested = TestCircleEntity("id2", value)
             }
-        }
+        }.serializeWithLog(encoder) { supportCircular(byHashCode = false, useRefEquality = false) }
 
-        val expected = expected<TestCircleEntity> {
-            beginStructure {
-                encodeStringElement("id", "id0")
-                encodeNullableSerializableElement("nested") {
-                    beginStructure<TestCircleEntity> {
-                        encodeStringElement("id", "id1")
-                        encodeNullableSerializableElement("nested") {
-                            beginStructure<TestCircleEntity> {
-                                encodeStringElement("id", "id2")
-                                encodeNullableSerializableElement("nested") {
-                                    beginStructure<TestCircleEntity> {
-                                        encodeStringElement("id", "id0")
-                                    }
-                                }
-                            }
+        assertEquals<TestCircleEntity>(encoder) {
+            structure {
+                element("id", "id0")
+                structureElement("nested") {
+                    element("id", "id1")
+                    structureElement("nested") {
+                        element("id", "id2")
+                        structureElement("nested") {
+                            element("id", "id0")
                         }
                     }
                 }
             }
         }
-
-        serializer<TestCircleEntity>().serialize(encoder, value)
-
-        assertTrue(expected.equals(testEncoder))
     }
 
     @Test
     fun testCircularWithoutHashCodeAndWithoutRefEquality() {
-        val testEncoder = TestEncoder("id1")
-        val encoder = BroadcastEncoder(testEncoder, loggerEncoder())
-            .supportCircular(byHashCode = false, useRefEquality = false)
+        val encoder = ElementEncoder("id1")
 
-        val value = TestCircleEntityWithEquals("id0", null).also { value ->
+        TestCircleEntityWithEquals("id0", null).also { value ->
             value.nested = TestCircleEntityWithEquals("id1", null).apply {
                 nested = TestCircleEntityWithEquals("id1", value)
             }
-        }
+        }.serializeWithLog(encoder) { supportCircular(byHashCode = false, useRefEquality = false) }
 
-        val expected = expected<TestCircleEntityWithEquals> {
-            beginStructure {
-                encodeStringElement("id", "id0")
-                encodeNullableSerializableElement("nested") {
-                    beginStructure<TestCircleEntityWithEquals> {
-                        encodeStringElement("id", "id1")
-                    }
+        assertEquals<TestCircleEntityWithEquals>(encoder) {
+            structure {
+                element("id", "id0")
+                structureElement("nested") {
+                    element("id", "id1")
                 }
             }
         }
-
-        serializer<TestCircleEntityWithEquals>().serialize(encoder, value)
-
-        assertTrue(expected.equals(testEncoder))
     }
 
     @Test
     fun testCircularWithHashCodeAndWithRefEquality() {
-        val testEncoder = TestEncoder("id1")
-        val encoder = BroadcastEncoder(testEncoder, loggerEncoder())
-            .supportCircular(byHashCode = true, useRefEquality = true)
+        val encoder = ElementEncoder("id1")
 
-        val value = TestDataCircleEntity("id0", null).also { value ->
+        TestDataCircleEntity("id0", null).also { value ->
             value.nested = TestDataCircleEntity("id1", null).apply {
                 nested = TestDataCircleEntity("id2", value)
             }
-        }
+        }.serializeWithLog(encoder) { supportCircular(byHashCode = true, useRefEquality = true) }
 
-        val expected = expected<TestDataCircleEntity> {
-            beginStructure {
-                encodeStringElement("id", "id0")
-                encodeNullableSerializableElement("nested") {
-                    beginStructure<TestDataCircleEntity> {
-                        encodeStringElement("id", "id1")
-                        encodeNullableSerializableElement("nested") {
-                            beginStructure<TestDataCircleEntity> {
-                                encodeStringElement("id", "id2")
-                                encodeNullableSerializableElement("nested") {
-                                    beginStructure<TestDataCircleEntity> {
-                                        encodeStringElement("id", "id0")
-                                    }
-                                }
-                            }
+        assertEquals<TestDataCircleEntity>(encoder) {
+            structure {
+                element("id", "id0")
+                structureElement("nested") {
+                    element("id", "id1")
+                    structureElement("nested") {
+                        element("id", "id2")
+                        structureElement("nested") {
+                            element("id", "id0")
                         }
                     }
                 }
             }
         }
-
-        serializer<TestDataCircleEntity>().serialize(encoder, value)
-
-        assertTrue(expected.equals(testEncoder))
     }
 
     @Test
     fun testCircularWithHashCodeAndWithoutRefEquality() {
-        val testEncoder = TestEncoder("id1")
-        val encoder = BroadcastEncoder(testEncoder, loggerEncoder())
-            .supportCircular(byHashCode = true, useRefEquality = false)
+        val encoder = ElementEncoder("id1")
 
-        val value = TestDataCircleEntity("id0", null).also { value ->
+        TestDataCircleEntity("id0", null).also { value ->
             value.nested = TestDataCircleEntity("id1", null).apply {
                 nested = TestDataCircleEntity("id1", value)
             }
-        }
+        }.serializeWithLog(encoder) { supportCircular(byHashCode = true, useRefEquality = false) }
 
-        val expected = expected<TestDataCircleEntity> {
-            beginStructure {
-                encodeStringElement("id", "id0")
-                encodeNullableSerializableElement("nested") {
-                    beginStructure<TestDataCircleEntity> {
-                        encodeStringElement("id", "id1")
-                    }
+        assertEquals<TestDataCircleEntity>(encoder) {
+            structure {
+                element("id", "id0")
+                structureElement("nested") {
+                    element("id", "id1")
                 }
             }
         }
-
-        serializer<TestDataCircleEntity>().serialize(encoder, value)
-
-        assertTrue(expected.equals(testEncoder))
     }
 
     @Test
@@ -170,28 +126,25 @@ class CircularEncoderTest {
             }
         }
 
-        val testEncoder = TestEncoder("id1")
-        val encoder = BroadcastEncoder(testEncoder, loggerEncoder())
-            .supportCircular(value, byHashCode = false, useRefEquality = true)
+        val encoder = ElementEncoder("id1")
+        value.serializeWithLog(encoder) {
+            supportCircular(
+                objForSerialization = value,
+                byHashCode = false,
+                useRefEquality = true,
+            )
+        }
 
-        val expected = expected<TestCircleEntity> {
-            beginStructure {
-                encodeStringElement("id", "id0")
-                encodeNullableSerializableElement("nested") {
-                    beginStructure<TestCircleEntity> {
-                        encodeStringElement("id", "id1")
-                        encodeNullableSerializableElement("nested") {
-                            beginStructure<TestCircleEntity> {
-                                encodeStringElement("id", "id2")
-                            }
-                        }
+        assertEquals<TestCircleEntity>(encoder) {
+            structure {
+                element("id", "id0")
+                structureElement("nested") {
+                    element("id", "id1")
+                    structureElement("nested") {
+                        element("id", "id2")
                     }
                 }
             }
         }
-
-        serializer<TestCircleEntity>().serialize(encoder, value)
-
-        assertTrue(expected.equals(testEncoder))
     }
 }

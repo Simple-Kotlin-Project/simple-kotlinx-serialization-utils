@@ -16,117 +16,86 @@ package io.github.edmondantes.encoding
 
 import io.github.edmondantes.entity.ContextualFilterEntity
 import io.github.edmondantes.entity.TestFilterEntity
-import io.github.edmondantes.serialization.encoding.BroadcastEncoder
+import io.github.edmondantes.serialization.encoding.element.ElementEncoder
+import io.github.edmondantes.serialization.encoding.element.factory.element
+import io.github.edmondantes.serialization.encoding.element.factory.elementNull
 import io.github.edmondantes.serialization.encoding.filterByIdentifier
-import io.github.edmondantes.util.TestEncoder
-import io.github.edmondantes.util.beginStructure
-import io.github.edmondantes.util.encodeNull
-import io.github.edmondantes.util.encodeNullableSerializableElement
-import io.github.edmondantes.util.encodeString
-import io.github.edmondantes.util.encodeStringElement
-import io.github.edmondantes.util.expected
-import io.github.edmondantes.util.loggerEncoder
-import kotlinx.serialization.serializer
+import io.github.edmondantes.util.assertEquals
+import io.github.edmondantes.util.serializeWithLog
 import kotlin.test.Test
-import kotlin.test.assertTrue
 
 class FilterEncoderTest {
 
     @Test
     fun compileTimeFilter() {
-        val encoders = listOf(TestEncoder("id1"), TestEncoder("id2"), TestEncoder("id3"))
-        val encoder = BroadcastEncoder(encoders.map { it.filterByIdentifier() } + loggerEncoder())
+        val encoders = listOf(ElementEncoder("id1"), ElementEncoder("id2"), ElementEncoder("id3"))
 
-        val expected = listOf(
-            expected<TestFilterEntity> {
-                beginStructure {
-                    encodeStringElement("id", ID)
-                    encodeStringElement("name", NAME)
-                    encodeNullableSerializableElement("nestedContextualFilteredEntity") {
-                        encodeNull<ContextualFilterEntity>()
-                    }
-                }
-            },
-            expected<TestFilterEntity> {
-                beginStructure {
-                    encodeStringElement("id", ID)
-                    encodeStringElement("name", NAME)
-                    encodeStringElement("password", PASSWORD)
-                    encodeStringElement("transactionId", TRANSACTION_ID)
-                    encodeNullableSerializableElement("nestedContextualFilteredEntity") {
-                        encodeNull<ContextualFilterEntity>()
-                    }
-                }
-            },
-            expected<TestFilterEntity> {
-                beginStructure {
-                    encodeStringElement("id", ID)
-                    encodeStringElement("name", NAME)
-                    encodeStringElement("personalData", PERSONAL_DATA)
-                    encodeStringElement("transactionId", TRANSACTION_ID)
-                    encodeNullableSerializableElement("nestedContextualFilteredEntity") {
-                        encodeNull<ContextualFilterEntity>()
-                    }
-                }
-            },
-        )
-
-        val value = TestFilterEntity(
+        TestFilterEntity(
             ID,
             NAME,
             PASSWORD,
             PERSONAL_DATA,
             TRANSACTION_ID,
             null,
-        )
+        ).serializeWithLog(encoders.map { it.filterByIdentifier() })
 
-        serializer<TestFilterEntity>().serialize(encoder, value)
+        assertEquals<TestFilterEntity>(encoders[0]) {
+            structure {
+                element("id", ID)
+                element("name", NAME)
+                elementNull("nestedContextualFilteredEntity")
+            }
+        }
 
-        for (i in 0 until 2) {
-            assertTrue(expected[i].equals(encoders[i]))
+        assertEquals<TestFilterEntity>(encoders[1]) {
+            structure {
+                element("id", ID)
+                element("name", NAME)
+                element("password", PASSWORD)
+                element("transactionId", TRANSACTION_ID)
+                elementNull("nestedContextualFilteredEntity")
+            }
+        }
+
+        assertEquals<TestFilterEntity>(encoders[2]) {
+            structure {
+                element("id", ID)
+                element("name", NAME)
+                element("personalData", PERSONAL_DATA)
+                element("transactionId", TRANSACTION_ID)
+                elementNull("nestedContextualFilteredEntity")
+            }
         }
     }
 
     @Test
     fun contextRuntimeFilter() {
-        val encoders = listOf(TestEncoder("id1"), TestEncoder("id8"))
-        val encoder = BroadcastEncoder(encoders.map { it.filterByIdentifier() } + loggerEncoder())
+        val encoders = listOf(ElementEncoder("id1"), ElementEncoder("id8"))
 
-        val expected = listOf(
-            expected<TestFilterEntity> {
-                beginStructure {
-                    encodeStringElement("id", ID)
-                    encodeStringElement("name", NAME)
-                    encodeNullableSerializableElement<TestFilterEntity, ContextualFilterEntity>("nestedContextualFilteredEntity") {
-                        encodeString("test")
-                    }
-                }
-            },
-            expected<TestFilterEntity> {
-                beginStructure {
-                    encodeStringElement("id", ID)
-                    encodeStringElement("name", NAME)
-                    encodeStringElement("transactionId", TRANSACTION_ID)
-                    encodeNullableSerializableElement<TestFilterEntity, ContextualFilterEntity>("nestedContextualFilteredEntity") {
-                        encodeString("test")
-                    }
-                }
-            },
-        )
-
-        val value = TestFilterEntity(
+        TestFilterEntity(
             ID,
             NAME,
             PASSWORD,
             PERSONAL_DATA,
             TRANSACTION_ID,
             ContextualFilterEntity("id8", "test"),
-        )
+        ).serializeWithLog(encoders.map { it.filterByIdentifier() })
 
-        serializer<TestFilterEntity>().serialize(encoder, value)
+        assertEquals<TestFilterEntity>(encoders[0]) {
+            structure {
+                element("id", ID)
+                element("name", NAME)
+                element("nestedContextualFilteredEntity", "test")
+            }
+        }
 
-        for (i in 0 until 2) {
-            assertTrue(expected[i].equals(encoders[i]))
+        assertEquals<TestFilterEntity>(encoders[1]) {
+            structure {
+                element("id", ID)
+                element("name", NAME)
+                element("transactionId", TRANSACTION_ID)
+                element("nestedContextualFilteredEntity", "test")
+            }
         }
     }
 

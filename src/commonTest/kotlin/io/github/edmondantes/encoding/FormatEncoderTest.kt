@@ -19,269 +19,213 @@ import io.github.edmondantes.entity.TestEntityWithFormatProperties
 import io.github.edmondantes.entity.TestEntityWithNestedEntityWithFormatProperties
 import io.github.edmondantes.entity.TestSimpleEntity
 import io.github.edmondantes.entity.TestStringFormat
-import io.github.edmondantes.serialization.encoding.BroadcastEncoder
+import io.github.edmondantes.serialization.encoding.element.ElementEncoder
+import io.github.edmondantes.serialization.encoding.element.factory.collectionContextual
+import io.github.edmondantes.serialization.encoding.element.factory.collectionFullContextual
+import io.github.edmondantes.serialization.encoding.element.factory.element
+import io.github.edmondantes.serialization.encoding.element.factory.elementByte
+import io.github.edmondantes.serialization.encoding.element.factory.elementNull
+import io.github.edmondantes.serialization.encoding.element.factory.structureElement
 import io.github.edmondantes.serialization.encoding.format.supportBinaryFormats
 import io.github.edmondantes.serialization.encoding.format.supportFormat
 import io.github.edmondantes.serialization.encoding.format.supportStringFormats
-import io.github.edmondantes.util.TestEncoder
-import io.github.edmondantes.util.beginCollection
-import io.github.edmondantes.util.beginStructure
-import io.github.edmondantes.util.encodeByteElement
-import io.github.edmondantes.util.encodeNull
-import io.github.edmondantes.util.encodeNullableSerializableElement
-import io.github.edmondantes.util.encodeSerializableElement
-import io.github.edmondantes.util.encodeString
-import io.github.edmondantes.util.encodeStringElement
-import io.github.edmondantes.util.expected
-import io.github.edmondantes.util.loggerEncoder
-import kotlinx.serialization.serializer
+import io.github.edmondantes.util.assertEquals
+import io.github.edmondantes.util.serializeWithLog
 import kotlin.test.Test
-import kotlin.test.assertTrue
 
 class FormatEncoderTest {
 
     @Test
     fun simplePropertyStringTest() {
-        val encoders = listOf(TestEncoder("test"))
-        val encoder = BroadcastEncoder(encoders + loggerEncoder())
-            .supportFormat("test2", TestStringFormat())
+        val encoder = ElementEncoder("test")
 
-        val entity = TestEntityWithFormatProperties("id", null, "test")
+        TestEntityWithFormatProperties("id", null, "test")
+            .serializeWithLog(encoder) {
+                supportFormat(
+                    "test2",
+                    TestStringFormat(),
+                )
+            }
 
-        serializer<TestEntityWithFormatProperties>().serialize(encoder, entity)
+        assertEquals<TestEntityWithFormatProperties>(encoder) {
+            structure {
+                element("id", "id")
+                element("test", "test")
 
-        val expected = expected<TestEntityWithFormatProperties> {
-            beginStructure {
-                encodeStringElement("id", "id")
-                encodeNullableSerializableElement("nested") {
-                    encodeNull<TestSimpleEntity>()
-                }
-                encodeSerializableElement<TestEntityWithFormatProperties, String>("test") {
-                    encodeString("test")
-                }
+                elementNull("nested")
             }
         }
-
-        assertTrue(expected.equals(encoders[0]))
     }
 
     @Test
     fun complexPropertyStringTest() {
-        val encoders = listOf(TestEncoder("test"))
-        val encoder = BroadcastEncoder(encoders + loggerEncoder())
-            .supportFormat("test", TestStringFormat())
+        val encoder = ElementEncoder("test")
 
         val nested = TestSimpleEntity("id0", "name", 0, emptyList())
-        val entity = TestEntityWithFormatProperties("id", nested)
 
-        serializer<TestEntityWithFormatProperties>().serialize(encoder, entity)
+        TestEntityWithFormatProperties("id", nested)
+            .serializeWithLog(encoder) { supportFormat("test", TestStringFormat()) }
 
-        val expected = expected<TestEntityWithFormatProperties> {
-            beginStructure {
-                encodeStringElement("id", "id")
-                encodeSerializableElement<TestEntityWithFormatProperties, String>("nested") {
-                    encodeString(nested.toString())
-                }
-                encodeNullableSerializableElement<TestEntityWithFormatProperties, String>("test") {
-                    encodeNull()
-                }
+        assertEquals<TestEntityWithFormatProperties>(encoder) {
+            structure {
+                element("id", "id")
+                element("nested", nested.toString())
+
+                elementNull("test")
             }
         }
-
-        assertTrue(expected.equals(encoders[0]))
     }
 
     @Test
     fun simpleComplexPropertyStringTest() {
-        val encoders = listOf(TestEncoder("test"))
-        val encoder = BroadcastEncoder(encoders + loggerEncoder())
-            .supportStringFormats("test" to TestStringFormat(), "test2" to TestStringFormat())
+        val encoder = ElementEncoder("test")
 
         val nested = TestSimpleEntity("id0", "name", 0, emptyList())
-        val entity = TestEntityWithFormatProperties("id", nested, "test")
-
-        serializer<TestEntityWithFormatProperties>().serialize(encoder, entity)
-
-        val expected = expected<TestEntityWithFormatProperties> {
-            beginStructure {
-                encodeStringElement("id", "id")
-                encodeSerializableElement<TestEntityWithFormatProperties, String>("nested") {
-                    encodeString(nested.toString())
-                }
-                encodeSerializableElement<TestEntityWithFormatProperties, String>("test") {
-                    encodeString("test")
-                }
-            }
+        TestEntityWithFormatProperties(
+            "id",
+            nested,
+            "test",
+        ).serializeWithLog(encoder) {
+            supportStringFormats(
+                "test" to TestStringFormat(),
+                "test2" to TestStringFormat(),
+            )
         }
 
-        assertTrue(expected.equals(encoders[0]))
+        assertEquals<TestEntityWithFormatProperties>(encoder) {
+            structure {
+                element("id", "id")
+                element("nested", nested.toString())
+                element("test", "test")
+            }
+        }
     }
 
     @Test
     fun simplePropertyBinaryTest() {
-        val encoders = listOf(TestEncoder("test"))
-        val encoder = BroadcastEncoder(encoders + loggerEncoder())
-            .supportFormat("test2", TestBinaryFormat())
+        val encoder = ElementEncoder("test")
 
-        val entity = TestEntityWithFormatProperties("id", null, "test")
+        TestEntityWithFormatProperties("id", null, "test")
+            .serializeWithLog(encoder) {
+                supportFormat(
+                    "test2",
+                    TestBinaryFormat(),
+                )
+            }
 
-        serializer<TestEntityWithFormatProperties>().serialize(encoder, entity)
-
-        val expected = expected<TestEntityWithFormatProperties> {
-            beginStructure {
-                encodeStringElement("id", "id")
-                encodeNullableSerializableElement("nested") {
-                    encodeNull<TestSimpleEntity>()
-                }
-                encodeSerializableElement<TestEntityWithFormatProperties, ByteArray>("test") {
-                    beginCollection {
-                        encodeByteElement("0", 0)
-                        encodeByteElement("1", 0)
-                        encodeByteElement("2", 0)
-                        encodeByteElement("3", 1)
-                    }
+        assertEquals<TestEntityWithFormatProperties>(encoder) {
+            structure {
+                element("id", "id")
+                elementNull("nested")
+                collectionContextual<ByteArray>("test") {
+                    elementByte(0)
+                    elementByte(0)
+                    elementByte(0)
+                    elementByte(1)
                 }
             }
         }
-
-        assertTrue(expected.equals(encoders[0]))
     }
 
     @Test
     fun complexPropertyBinaryTest() {
-        val encoders = listOf(TestEncoder("test"))
-        val encoder = BroadcastEncoder(encoders + loggerEncoder())
-            .supportFormat("test", TestBinaryFormat())
+        val encoder = ElementEncoder("test")
 
-        val nested = TestSimpleEntity("id0", "name", 0, emptyList())
-        val entity = TestEntityWithFormatProperties("id", nested)
+        TestEntityWithFormatProperties("id", TestSimpleEntity("id0", "name", 0, emptyList()))
+            .serializeWithLog(encoder) {
+                supportFormat("test", TestBinaryFormat())
+            }
 
-        serializer<TestEntityWithFormatProperties>().serialize(encoder, entity)
-
-        val expected = expected<TestEntityWithFormatProperties> {
-            beginStructure {
-                encodeStringElement("id", "id")
-                encodeSerializableElement<TestEntityWithFormatProperties, ByteArray>("nested") {
-                    beginCollection {
-                        encodeByteElement("0", 0)
-                        encodeByteElement("1", 0)
-                        encodeByteElement("2", 0)
-                        encodeByteElement("3", 1)
-                    }
+        assertEquals<TestEntityWithFormatProperties>(encoder) {
+            structure {
+                element("id", "id")
+                collectionFullContextual<TestSimpleEntity?, ByteArray>("nested") {
+                    elementByte(0)
+                    elementByte(0)
+                    elementByte(0)
+                    elementByte(1)
                 }
-                encodeNullableSerializableElement<TestEntityWithFormatProperties, String>("test") {
-                    encodeNull()
-                }
+                elementNull("test")
             }
         }
-
-        assertTrue(expected.equals(encoders[0]))
     }
 
     @Test
     fun simpleComplexPropertyBinaryTest() {
-        val encoders = listOf(TestEncoder("test"))
-        val encoder = BroadcastEncoder(encoders + loggerEncoder())
-            .supportBinaryFormats("test" to TestBinaryFormat(), "test2" to TestBinaryFormat())
+        val encoder = ElementEncoder("test")
 
-        val nested = TestSimpleEntity("id0", "name", 0, emptyList())
-        val entity = TestEntityWithFormatProperties("id", nested, "test")
+        TestEntityWithFormatProperties("id", TestSimpleEntity("id0", "name", 0, emptyList()), "test")
+            .serializeWithLog(encoder) {
+                supportBinaryFormats("test" to TestBinaryFormat(), "test2" to TestBinaryFormat())
+            }
 
-        serializer<TestEntityWithFormatProperties>().serialize(encoder, entity)
-
-        val expected = expected<TestEntityWithFormatProperties> {
-            beginStructure {
-                encodeStringElement("id", "id")
-                encodeSerializableElement<TestEntityWithFormatProperties, ByteArray>("nested") {
-                    beginCollection {
-                        encodeByteElement("0", 0)
-                        encodeByteElement("1", 0)
-                        encodeByteElement("2", 0)
-                        encodeByteElement("3", 1)
-                    }
+        assertEquals<TestEntityWithFormatProperties>(encoder) {
+            structure {
+                element("id", "id")
+                collectionFullContextual<TestSimpleEntity?, ByteArray>("nested") {
+                    elementByte(0)
+                    elementByte(0)
+                    elementByte(0)
+                    elementByte(1)
                 }
-                encodeSerializableElement<TestEntityWithFormatProperties, ByteArray>("test") {
-                    beginCollection {
-                        encodeByteElement("0", 0)
-                        encodeByteElement("1", 0)
-                        encodeByteElement("2", 0)
-                        encodeByteElement("3", 1)
-                    }
+                collectionFullContextual<String?, ByteArray>("test") {
+                    elementByte(0)
+                    elementByte(0)
+                    elementByte(0)
+                    elementByte(1)
                 }
             }
         }
-
-        assertTrue(expected.equals(encoders[0]))
     }
 
     @Test
     fun nestedSimplePropertyStringTest() {
-        val encoders = listOf(TestEncoder("test"))
-        val encoder = BroadcastEncoder(encoders + loggerEncoder())
-            .supportFormat("test2", TestStringFormat())
+        val encoder = ElementEncoder("test")
 
-        val entity = TestEntityWithNestedEntityWithFormatProperties(
+        TestEntityWithNestedEntityWithFormatProperties(
             "id1",
             TestEntityWithFormatProperties("id", null, "test"),
-        )
+        ).serializeWithLog(encoder) {
+            supportFormat("test2", TestStringFormat())
+        }
 
-        serializer<TestEntityWithNestedEntityWithFormatProperties>().serialize(encoder, entity)
-
-        val expected = expected<TestEntityWithNestedEntityWithFormatProperties> {
-            beginStructure {
-                encodeStringElement("id", "id1")
-                encodeSerializableElement("nested") {
-                    beginStructure<TestEntityWithFormatProperties> {
-                        encodeStringElement("id", "id")
-                        encodeNullableSerializableElement("nested") {
-                            encodeNull<TestSimpleEntity>()
-                        }
-                        encodeSerializableElement<TestEntityWithFormatProperties, String>("test") {
-                            encodeString("test")
-                        }
-                    }
+        assertEquals<TestEntityWithNestedEntityWithFormatProperties>(encoder) {
+            structure {
+                element("id", "id1")
+                structureElement("nested") {
+                    element("id", "id")
+                    elementNull("nested")
+                    element("test", "test")
                 }
             }
         }
-
-        assertTrue(expected.equals(encoders[0]))
     }
 
     @Test
     fun nestedSimplePropertyBinaryTest() {
-        val encoders = listOf(TestEncoder("test"))
-        val encoder = BroadcastEncoder(encoders + loggerEncoder())
-            .supportFormat("test2", TestBinaryFormat())
+        val encoder = ElementEncoder()
 
-        val entity = TestEntityWithNestedEntityWithFormatProperties(
+        TestEntityWithNestedEntityWithFormatProperties(
             "id1",
             TestEntityWithFormatProperties("id", null, "test"),
-        )
+        ).serializeWithLog(encoder) {
+            supportFormat("test2", TestBinaryFormat())
+        }
 
-        serializer<TestEntityWithNestedEntityWithFormatProperties>().serialize(encoder, entity)
-
-        val expected = expected<TestEntityWithNestedEntityWithFormatProperties> {
-            beginStructure {
-                encodeStringElement("id", "id1")
-                encodeSerializableElement("nested") {
-                    beginStructure<TestEntityWithFormatProperties> {
-                        encodeStringElement("id", "id")
-                        encodeNullableSerializableElement("nested") {
-                            encodeNull<TestSimpleEntity>()
-                        }
-                        encodeSerializableElement<TestEntityWithFormatProperties, ByteArray>("test") {
-                            beginCollection {
-                                encodeByteElement("0", 0)
-                                encodeByteElement("1", 0)
-                                encodeByteElement("2", 0)
-                                encodeByteElement("3", 1)
-                            }
-                        }
+        assertEquals<TestEntityWithNestedEntityWithFormatProperties>(encoder) {
+            structure {
+                element("id", "id1")
+                structureElement("nested") {
+                    element("id", "id")
+                    elementNull("nested")
+                    collectionContextual<ByteArray>("test") {
+                        elementByte(0)
+                        elementByte(0)
+                        elementByte(0)
+                        elementByte(1)
                     }
                 }
             }
         }
-
-        assertTrue(expected.equals(encoders[0]))
     }
 }

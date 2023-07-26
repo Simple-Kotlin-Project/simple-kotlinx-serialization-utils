@@ -12,17 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.edmondantes.util
+package io.github.edmondantes.serialization.util
 
-import kotlinx.serialization.descriptors.SerialDescriptor
+import io.github.edmondantes.serialization.encoding.BroadcastEncoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.serializer
 
-data class TestEncodingElements(
-    val methodName: String,
-    val descriptorName: String?,
-    val elementIndex: Int?,
-    val elementName: String?,
-    val elementValue: Any?,
-)
+public inline fun <reified T> T.serialize(vararg encoders: Encoder, block: BroadcastEncoder.() -> Encoder = { this }) {
+    serializer<T>().serialize(if (encoders.size == 1) encoders[0] else BroadcastEncoder(*encoders).block(), this)
+}
 
-inline fun <reified T> descriptor(): SerialDescriptor = serializer<T>().descriptor
+public inline fun <reified T> T.serialize(encoders: List<Encoder>, block: BroadcastEncoder.() -> Encoder = { this }) {
+    serializer<T>().serialize(if (encoders.size == 1) encoders[0] else BroadcastEncoder(encoders).block(), this)
+}

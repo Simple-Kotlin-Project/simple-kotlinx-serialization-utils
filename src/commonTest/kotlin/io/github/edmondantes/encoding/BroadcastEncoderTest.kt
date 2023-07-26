@@ -18,37 +18,36 @@ import io.github.edmondantes.entity.TestCircleEntity
 import io.github.edmondantes.entity.TestEntityWithNested
 import io.github.edmondantes.entity.TestSimpleEntity
 import io.github.edmondantes.serialization.encoding.BroadcastEncoder
-import io.github.edmondantes.util.TestEncoder
+import io.github.edmondantes.serialization.encoding.element.ElementEncoder
+import io.github.edmondantes.serialization.util.serialize
+import io.github.edmondantes.util.assertEquals
 import io.github.edmondantes.util.loggerEncoder
-import kotlinx.serialization.serializer
+import io.github.edmondantes.util.serializeWithLog
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class BroadcastEncoderTest {
 
     @Test
     fun testSimpleEntity() {
-        val encoders = listOf(TestEncoder("id1"), TestEncoder("id2"))
-        val encoder = BroadcastEncoder(encoders + loggerEncoder())
+        val encoders = listOf(ElementEncoder(id = "id1"), ElementEncoder(id = "id2"))
 
-        val value = TestSimpleEntity(
+        TestSimpleEntity(
             "id",
             "name",
             10,
             listOf("one", "two"),
-        )
+        ).serializeWithLog(encoders)
 
-        serializer<TestSimpleEntity>().serialize(encoder, value)
+        val results = encoders.map { it.finishConstruct() }
 
-        assertEquals(encoders[0], encoders[1])
+        assertEquals(results[0], results[1])
     }
 
     @Test
     fun testNestedEntity() {
-        val encoders = listOf(TestEncoder("id1"), TestEncoder("id2"))
-        val encoder = BroadcastEncoder(encoders + loggerEncoder())
+        val encoders = listOf(ElementEncoder("id1"), ElementEncoder("id2"))
 
-        val value = TestEntityWithNested(
+        TestEntityWithNested(
             "id123",
             TestSimpleEntity(
                 "id",
@@ -56,24 +55,26 @@ class BroadcastEncoderTest {
                 10,
                 listOf("one", "two"),
             ),
-        )
+        ).serializeWithLog(encoders)
 
-        serializer<TestEntityWithNested>().serialize(encoder, value)
+        val result = encoders.map { it.finishConstruct() }
 
-        assertEquals(encoders[0], encoders[1])
+        assertEquals(result[0], result[1])
     }
 
     @Test
     fun testCircularEntity() {
-        val encoders = listOf(TestEncoder("id1"), TestEncoder("id2"))
+        val encoders = listOf(ElementEncoder("id1"), ElementEncoder("id2"))
         val encoder = BroadcastEncoder(encoders + loggerEncoder()).supportCircular(false)
 
         val entity0 = TestCircleEntity("id1", null)
         val entity1 = TestCircleEntity("id2", null).also { entity0.nested = it }
         TestCircleEntity("id3", entity0).also { entity1.nested = it }
 
-        serializer<TestCircleEntity>().serialize(encoder, entity0)
+        entity0.serialize(encoder)
 
-        assertEquals(encoders[0], encoders[1])
+        val result = encoders.map { it.finishConstruct() }
+
+        assertEquals(result[0], result[1])
     }
 }

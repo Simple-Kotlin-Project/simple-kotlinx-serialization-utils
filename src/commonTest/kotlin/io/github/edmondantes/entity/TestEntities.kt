@@ -105,6 +105,13 @@ class TestEntityWithInlineProperty(
 
 @Suppress("UNUSED")
 @Serializable
+class TestEntityWithInlinePropertyWithSameName(
+    @InlineSerialization
+    val id: TestSimpleEntity,
+)
+
+@Suppress("UNUSED")
+@Serializable
 class TestEntityWithInlineClass(
     val notInline: String,
     val inlineClass: TestInlineEntity,
@@ -132,6 +139,17 @@ class TestEntityWithFormatProperties(
 class TestEntityWithNestedEntityWithFormatProperties(
     val id: String,
     val nested: TestEntityWithFormatProperties,
+)
+
+@Serializable
+enum class TestEnum {
+    A, B, C
+}
+
+@Serializable
+class TestEntityWithEnum(
+    val id: String,
+    val enum: TestEnum,
 )
 
 @Serializable(ContextualFilterEntitySerializer::class)
