@@ -20,6 +20,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 
+//FIXME: rewrite
 public class InlineEncoder(
     private val delegate: Encoder,
     private val compositeEncoderQueue: ArrayDeque<CompositeEncoder> = ArrayDeque(),
