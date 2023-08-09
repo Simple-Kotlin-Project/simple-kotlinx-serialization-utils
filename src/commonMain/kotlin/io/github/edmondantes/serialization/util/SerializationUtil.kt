@@ -18,10 +18,10 @@ import io.github.edmondantes.serialization.encoding.BroadcastEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.serializer
 
-public inline fun <reified T> T.serialize(vararg encoders: Encoder, block: BroadcastEncoder.() -> Encoder = { this }) {
-    serializer<T>().serialize(if (encoders.size == 1) encoders[0] else BroadcastEncoder(*encoders).block(), this)
+public inline fun <reified T> T.serialize(vararg encoders: Encoder, block: Encoder.() -> Encoder = { this }) {
+    serializer<T>().serialize(if (encoders.size == 1) encoders[0].block() else BroadcastEncoder(encoders.map(block)), this)
 }
 
-public inline fun <reified T> T.serialize(encoders: List<Encoder>, block: BroadcastEncoder.() -> Encoder = { this }) {
-    serializer<T>().serialize(if (encoders.size == 1) encoders[0] else BroadcastEncoder(encoders).block(), this)
+public inline fun <reified T> T.serialize(encoders: List<Encoder>, block: Encoder.() -> Encoder = { this }) {
+    serializer<T>().serialize(if (encoders.size == 1) encoders[0].block() else BroadcastEncoder(encoders.map(block)), this)
 }

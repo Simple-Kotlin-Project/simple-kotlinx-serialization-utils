@@ -20,52 +20,24 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 
-//FIXME: rewrite
 public class InlineEncoder(
     private val delegate: Encoder,
-    private val compositeEncoderQueue: ArrayDeque<CompositeEncoder> = ArrayDeque(),
-    private var inline: Int = 0,
+    private val parentCompositeEncoder: InlineCompositeEncoder? = null,
+    private val isInline: Boolean = false,
 ) : Encoder by delegate {
-
-    private var nextIsInline: Boolean = false
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder =
-        if (nextIsInline || descriptor.annotations.filterIsInstance<InlineSerialization>().isNotEmpty()) {
-            nextIsInline = false
-            inline++
-            compositeEncoderQueue.last()
+        if ((descriptor.annotations.filterIsInstance<InlineSerialization>().isNotEmpty() || isInline) &&
+            parentCompositeEncoder != null
+        ) {
+            parentCompositeEncoder
         } else {
             InlineCompositeEncoder(
                 delegate.beginStructure(descriptor),
                 this,
-                ::endStructure,
-            ).also(compositeEncoderQueue::addLast)
+            )
         }
-
-    public fun changeEncoder(delegate: Encoder, isInline: Boolean = false): InlineEncoder =
-        if (this.delegate === delegate) {
-            this
-        } else {
-            InlineEncoder(delegate, compositeEncoderQueue, inline).also {
-                if (isInline) {
-                    inline++
-                }
-            }
-        }.also {
-            it.nextIsInline = isInline
-        }
-
-    private fun endStructure(): Boolean {
-        if (inline == 0) {
-            compositeEncoderQueue.removeLast()
-            return true
-        } else {
-            inline--
-        }
-
-        return false
-    }
 }
 
 public fun Encoder.supportInline(): InlineEncoder = InlineEncoder(this)

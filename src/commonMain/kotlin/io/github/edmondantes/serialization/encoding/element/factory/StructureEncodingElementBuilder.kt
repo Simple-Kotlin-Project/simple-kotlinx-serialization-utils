@@ -43,6 +43,11 @@ public interface StructureEncodingElementBuilder {
         block: ElementFactory.() -> EncodingElement<*>,
     ): StructureEncodingElementBuilder
 
+    public fun switch(
+        descriptor: SerialDescriptor,
+        block: StructureEncodingElementBuilder.() -> Unit,
+    ): StructureEncodingElementBuilder
+
     public fun build(): StructureEncodingElement
 }
 
@@ -53,6 +58,9 @@ public fun StructureEncodingElementBuilder.element(name: String, value: Any?): S
     apply {
         element(name = name).value(value)
     }
+
+public inline fun <reified T> StructureEncodingElementBuilder.switch(noinline block: StructureEncodingElementBuilder.() -> Unit): StructureEncodingElementBuilder =
+    switch(serialDescriptor<T>(), block)
 
 @JvmName("elementWithType")
 public inline fun <reified T> StructureEncodingElementBuilder.element(

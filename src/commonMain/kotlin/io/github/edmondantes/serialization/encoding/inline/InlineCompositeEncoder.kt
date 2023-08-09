@@ -20,12 +20,11 @@ import io.github.edmondantes.serialization.getElementAllAnnotation
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
+import kotlinx.serialization.encoding.Encoder
 
-//FIXME: rewrite
 public class InlineCompositeEncoder(
     private val delegate: CompositeEncoder,
-    private val inlineEncoder: InlineEncoder,
-    private val endStructureHandler: () -> Boolean,
+    private val encoderDelegate: Encoder,
 ) : CompositeEncoder by delegate {
 
     override fun <T : Any?> encodeSerializableElement(
@@ -37,12 +36,12 @@ public class InlineCompositeEncoder(
         val isInline = descriptor.getElementAllAnnotation(index).filterIsInstance<InlineSerialization>().isNotEmpty()
 
         if (isInline) {
-            serializer.serialize(inlineEncoder, value)
+            serializer.serialize(InlineEncoder(encoderDelegate, this, true), value)
             return
         }
 
         val inlineEncodingStrategy = CustomSerializationStrategy(serializer) {
-            inlineEncoder.changeEncoder(it, isInline)
+            InlineEncoder(it, this)
         }
 
         delegate.encodeSerializableElement(
@@ -53,9 +52,7 @@ public class InlineCompositeEncoder(
         )
     }
 
-    override fun endStructure(descriptor: SerialDescriptor) {
-        if (endStructureHandler()) {
-            delegate.endStructure(descriptor)
-        }
+    override fun encodeStringElement(descriptor: SerialDescriptor, index: Int, value: String) {
+        delegate.encodeStringElement(descriptor, index, value)
     }
 }

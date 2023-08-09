@@ -104,11 +104,32 @@ public open class DefaultStructureEncodingElementBuilder(
         }
     }
 
+    override fun switch(
+        descriptor: SerialDescriptor,
+        block: StructureEncodingElementBuilder.() -> Unit,
+    ): StructureEncodingElementBuilder {
+        DefaultStructureEncodingElementBuilder(descriptor, null, null, null).apply(block).builder.value.also {
+            if (builder.value == null) {
+                builder.value = it
+            } else if (it != null) {
+                builder.value?.addAll(it)
+            }
+        }
+        return this
+    }
+
     override fun build(): StructureEncodingElement =
         builder.build()
 
-    private fun <T> childPrepare(name: String, block: (SerialDescriptor?, Int) -> T): T {
-        val index = descriptor.getElementIndex(name)
-        return block(if (descriptor.kind is PrimitiveKind) null else descriptor.getElementDescriptor(index), index)
+    private fun <T> childPrepare(
+        name: String,
+        block: (SerialDescriptor?, Int) -> T,
+    ): T {
+        val currDescriptor = childDescriptor ?: descriptor
+        val index = currDescriptor.getElementIndex(name)
+        return block(
+            if (currDescriptor.kind is PrimitiveKind) null else currDescriptor.getElementDescriptor(index),
+            index,
+        )
     }
 }

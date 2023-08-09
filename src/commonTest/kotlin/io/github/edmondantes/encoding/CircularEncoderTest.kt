@@ -20,6 +20,7 @@ import io.github.edmondantes.entity.TestDataCircleEntity
 import io.github.edmondantes.serialization.encoding.element.ElementEncoder
 import io.github.edmondantes.serialization.encoding.element.factory.element
 import io.github.edmondantes.serialization.encoding.element.factory.structureElement
+import io.github.edmondantes.serialization.encoding.supportCircular
 import io.github.edmondantes.util.assertEquals
 import io.github.edmondantes.util.serializeWithLog
 import kotlin.test.Test

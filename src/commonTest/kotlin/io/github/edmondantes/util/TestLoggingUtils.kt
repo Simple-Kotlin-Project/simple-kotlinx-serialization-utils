@@ -15,7 +15,6 @@
 package io.github.edmondantes.util
 
 import env.Env
-import io.github.edmondantes.serialization.encoding.BroadcastEncoder
 import io.github.edmondantes.serialization.encoding.LoggerEncoder
 import io.github.edmondantes.serialization.util.AppendableWithIndent
 import io.github.edmondantes.serialization.util.DelegateAppendableWithIndent
@@ -43,8 +42,8 @@ fun log(block: AppendableWithIndent.() -> Unit) {
     }
 }
 
-inline fun <reified T> T.serializeWithLog(vararg encoders: Encoder, block: BroadcastEncoder.() -> Encoder = { this }) =
+inline fun <reified T> T.serializeWithLog(vararg encoders: Encoder, block: Encoder.() -> Encoder = { this }) =
     serializeWithLog(encoders.toList(), block)
 
-inline fun <reified T> T.serializeWithLog(encoders: List<Encoder>, block: BroadcastEncoder.() -> Encoder = { this }) =
+inline fun <reified T> T.serializeWithLog(encoders: List<Encoder>, block: Encoder.() -> Encoder = { this }) =
     serialize(encoders + loggerEncoder(), block)

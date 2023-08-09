@@ -14,121 +14,100 @@
  */
 package io.github.edmondantes.encoding
 
+import io.github.edmondantes.entity.TestEntityWithInlineClass
+import io.github.edmondantes.entity.TestEntityWithInlineProperty
+import io.github.edmondantes.entity.TestEntityWithInlinePropertyWithSameName
+import io.github.edmondantes.entity.TestInlineEntity
+import io.github.edmondantes.entity.TestSimpleEntity
+import io.github.edmondantes.serialization.encoding.element.ElementEncoder
+import io.github.edmondantes.serialization.encoding.element.factory.collectionElement
+import io.github.edmondantes.serialization.encoding.element.factory.element
+import io.github.edmondantes.serialization.encoding.element.factory.switch
+import io.github.edmondantes.serialization.encoding.inline.supportInline
+import io.github.edmondantes.util.assertEquals
+import io.github.edmondantes.util.serializeWithLog
+import kotlin.test.Test
+
 class InlineEncoderTest {
 
-//    @Test
-//    fun testInlineProperty() {
-//        val encoder = ElementEncoder("id0")
-//
-//        TestEntityWithInlineProperty(
-//            "id0",
-//            TestSimpleEntity(
-//                "id1",
-//                "name",
-//                10,
-//                listOf("one", "two"),
-//            ),
-//        ).serializeWithLog(encoder) {
-//            supportInline()
-//        }
-//
-//        println(encoder.finishConstruct())
-//
-//        val expected = expected<TestEntityWithInlineProperty> {
-//            beginStructure {
-//                encodeStringElement("notInline", "id0")
-//                encodeSerializableElement<TestEntityWithInlineProperty, TestSimpleEntity>("inlineProperty") {}
-//                anotherDescriptor<TestEntityWithInlineProperty, TestSimpleEntity> {
-//                    encodeStringElement("id", "id1")
-//                    encodeStringElement("name", "name")
-//                    encodeIntElement("index", 10)
-//
-//                    encodeSerializableElement("collection") {
-//                        beginCollection<ArrayList<String>> {
-//                            encodeSerializableElement("0") {
-//                                encodeString<ArrayList<String>>("one")
-//                            }
-//                            encodeSerializableElement("1") {
-//                                encodeString<ArrayList<String>>("two")
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    @Test
-//    @Ignore
-//    fun testInlineClass() {
-//        val encoders = listOf(TestEncoder("id0"))
-//        val encoder = BroadcastEncoder(encoders + loggerEncoder()).supportInline()
-//
-//        val value = TestEntityWithInlineClass(
-//            "id0",
-//            TestInlineEntity(
-//                "id1",
-//                "name",
-//            ),
-//        )
-//
-//        serializer<TestEntityWithInlineClass>().serialize(encoder, value)
-//
-//        val expected = expected<TestEntityWithInlineClass> {
-//            beginStructure {
-//                encodeStringElement("notInline", "id0")
-//                encodeSerializableElement<TestEntityWithInlineClass, TestInlineEntity>("inlineClass") {}
-//                anotherDescriptor<TestEntityWithInlineClass, TestInlineEntity> {
-//                    encodeStringElement("id", "id1")
-//                    encodeStringElement("name", "name")
-//                }
-//            }
-//        }
-//
-//        assertTrue(expected.equals(encoders[0]))
-//    }
-//
-//    @Test
-//    @Ignore
-//    fun testInlinePropertyWithSameName() {
-//        val encoders = listOf(TestEncoder("id0"))
-//        val encoder = BroadcastEncoder(encoders + loggerEncoder()).supportInline()
-//
-//        val value = TestEntityWithInlinePropertyWithSameName(
-//            TestSimpleEntity(
-//                "id0",
-//                "name",
-//                10,
-//                listOf("one", "two"),
-//            ),
-//        )
-//
-//        serializer<TestEntityWithInlinePropertyWithSameName>().serialize(encoder, value)
-//
-// //        val expected = expected<TestEntityWithInlinePropertyWithSameName> {
-// //            beginStructure {
-// //                encodeSerializableElement<TestEntityWithInlinePropertyWithSameName, TestSimpleEntity>("id") {}
-// //                anotherDescriptor<TestEntityWithInlinePropertyWithSameName, TestSimpleEntity> {
-// //                    encodeStringElement("id", "id0")
-// //                    encodeStringElement("name", "name")
-// //                    encodeIntElement("index", 10)
-// //
-// //                    encodeSerializableElement("collection") {
-// //                        beginCollection<ArrayList<String>> {
-// //                            encodeSerializableElement("0") {
-// //                                encodeString<ArrayList<String>>("one")
-// //                            }
-// //                            encodeSerializableElement("1") {
-// //                                encodeString<ArrayList<String>>("two")
-// //                            }
-// //                        }
-// //                    }
-// //                }
-// //            }
-// //        }
-// //
-// //        assertTrue(expected.equals(encoders[0]))
-//
-//        println(encoders[0])
-//    }
+    @Test
+    fun testInline() {
+        val encoder = ElementEncoder("id0")
+
+        TestEntityWithInlineProperty(
+            "id0",
+            TestSimpleEntity(
+                "id1",
+                "name",
+                10,
+                listOf("one", "two"),
+            ),
+        ).serializeWithLog(encoder) { supportInline() }
+
+        assertEquals<TestEntityWithInlineProperty>(encoder) {
+            structure {
+                element("notInline", "id0")
+                switch<TestSimpleEntity> {
+                    element("id", "id1")
+                    element("name", "name")
+                    element("index", 10)
+                    collectionElement("collection") {
+                        element("one")
+                        element("two")
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testInlineClass() {
+        val encoder = ElementEncoder("id0")
+
+        TestEntityWithInlineClass(
+            "id0",
+            TestInlineEntity(
+                "id1",
+                "name",
+            ),
+        ).serializeWithLog(encoder) { supportInline() }
+
+        assertEquals<TestEntityWithInlineClass>(encoder) {
+            structure {
+                element("notInline", "id0")
+                switch<TestInlineEntity> {
+                    element("id", "id1")
+                    element("name", "name")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testInlinePropertyWithSameName() {
+        val encoder = ElementEncoder("id0")
+
+        TestEntityWithInlinePropertyWithSameName(
+            TestSimpleEntity(
+                "id0",
+                "name",
+                10,
+                listOf("one", "two"),
+            ),
+        ).serializeWithLog(encoder) { supportInline() }
+
+        assertEquals<TestEntityWithInlinePropertyWithSameName>(encoder) {
+            structure {
+                switch<TestSimpleEntity> {
+                    element("id", "id0")
+                    element("name", "name")
+                    element("index", 10)
+                    collectionElement("collection") {
+                        element("one")
+                        element("two")
+                    }
+                }
+            }
+        }
+    }
 }
