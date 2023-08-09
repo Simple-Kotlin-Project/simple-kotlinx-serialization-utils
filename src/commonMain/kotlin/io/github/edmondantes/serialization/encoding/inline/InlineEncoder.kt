@@ -31,11 +31,12 @@ public class InlineEncoder(
         if ((descriptor.annotations.filterIsInstance<InlineSerialization>().isNotEmpty() || isInline) &&
             parentCompositeEncoder != null
         ) {
-            parentCompositeEncoder
+            InlineCompositeEncoder(parentCompositeEncoder, this, true)
         } else {
             InlineCompositeEncoder(
                 delegate.beginStructure(descriptor),
                 this,
+                false
             )
         }
 }

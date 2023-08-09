@@ -25,6 +25,7 @@ import kotlinx.serialization.encoding.Encoder
 public class InlineCompositeEncoder(
     private val delegate: CompositeEncoder,
     private val encoderDelegate: Encoder,
+    private val isInline: Boolean = false
 ) : CompositeEncoder by delegate {
 
     override fun <T : Any?> encodeSerializableElement(
@@ -52,7 +53,9 @@ public class InlineCompositeEncoder(
         )
     }
 
-    override fun encodeStringElement(descriptor: SerialDescriptor, index: Int, value: String) {
-        delegate.encodeStringElement(descriptor, index, value)
+    override fun endStructure(descriptor: SerialDescriptor) {
+        if (!isInline) {
+            delegate.endStructure(descriptor)
+        }
     }
 }
