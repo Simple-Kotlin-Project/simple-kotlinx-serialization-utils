@@ -1,0 +1,6 @@
+[versions]
+simplekmm = "0.6.0"
+
+
+[plugins]
+simple_kotlin_gradle = { id = "io.github.edmondantes.simple.kmm.gradle.plugin", version.ref = "simplekmm" }

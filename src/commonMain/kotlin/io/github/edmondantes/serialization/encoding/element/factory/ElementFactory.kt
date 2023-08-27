@@ -29,7 +29,7 @@ public fun ElementFactory.byte(number: Number?): EncodingElement<*> =
     value(number?.toByte())
 
 public fun ElementFactory.char(number: Number?): EncodingElement<*> =
-    value(number?.toChar())
+    value(number?.toInt()?.toChar())
 
 public fun ElementFactory.short(number: Number?): EncodingElement<*> =
     value(number?.toShort())

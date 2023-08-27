@@ -15,7 +15,7 @@ import io.github.edmondantes.simple.kotlin.multiplatform.gradle.plugin.util.prop
  * limitations under the License.
  */
 plugins {
-    id("io.github.edmondantes.simple.kmm.gradle.plugin")
+    alias(libs.plugins.simple.kotlin.gradle)
 }
 
 group = "io.github.edmondantes"
@@ -23,7 +23,6 @@ group = "io.github.edmondantes"
 kotlin {
     sourceSets {
         val kotlinSerializationVersion: String by gradleProperty { }
-
         val commonMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinSerializationVersion")

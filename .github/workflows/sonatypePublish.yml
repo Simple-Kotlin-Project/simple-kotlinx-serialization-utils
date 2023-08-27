@@ -20,8 +20,19 @@ jobs:
           base_url: ${{ secrets.SONATYPE_BASE_URL }}
   publish:
     needs: generate_publish_id
-    runs-on: ubuntu-latest
-    name: Publish all artifact to nexus
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            gradlew: gradlew.bat
+            tasks: publishNativeForWindowsToMavenRepository
+          - os: macos-latest
+            gradlew: gradlew
+            tasks: publishNativeForMacosToMavenRepository
+          - os: ubuntu-latest
+            gradlew: gradlew
+            tasks: publishNativeForLinuxToMavenRepository publishNotNativeToMavenRepository
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -34,7 +45,7 @@ jobs:
         run: git fetch --all -f -P -p
       - name: Publish
         run: |
-          ./gradlew \
+          ./${{ matrix.gradlew }} \
           -Psimple.kmm.spotless.ratchet.git.branch=origin/master \
           -Psimple.kmm.publish.repository.url="${{ secrets.PUBLISH_REPOSITORY_URL }}" \
           -Psimple.kmm.publish.repository.id="${{ needs.generate_publish_id.outputs.repository_id }}" \
@@ -43,6 +54,5 @@ jobs:
           -Psimple.kmm.sign.key.id="${{ secrets.SIGNING_KEY_ID }}" \
           -Psimple.kmm.sign.password="${{ secrets.SIGNING_PASSWORD }}" \
           -Psimple.kmm.sign.private.key="${{ secrets.SIGNING_PRIVATE_KEY }}" \
-          -Psimple.kmm.kotlin.compile.only.platform=false \
-          -Psimple.kmm.kotlin.compile.browser.enabled=false \
-          clean publish --no-daemon --no-parallel --stacktrace
+          -Psimple.kmm.kotlin.compile.target.browser.js.enabled=false \
+          clean ${{ matrix.tasks }} --no-daemon --no-parallel --stacktrace

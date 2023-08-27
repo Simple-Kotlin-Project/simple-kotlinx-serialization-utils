@@ -15,6 +15,14 @@
 
 rootProject.name = "simple-kotlinx-serialization-utils"
 
+dependencyResolutionManagement {
+    versionCatalogs {
+        create("libs") {
+            from(files("./gradle/libs.version.toml"))
+        }
+    }
+}
+
 pluginManagement {
     repositories {
         maven {
@@ -22,9 +30,5 @@ pluginManagement {
             url = uri("../local-plugin-repository")
         }
         gradlePluginPortal()
-    }
-
-    plugins {
-        id("io.github.edmondantes.simple.kmm.gradle.plugin") version ("0.4.0")
     }
 }
