@@ -44,15 +44,17 @@ jobs:
       - name: Fetch project
         run: git fetch --all -f -P -p
       - name: Publish
-        run: |
-          ./${{ matrix.gradlew }} \
-          -Psimple.kmm.spotless.ratchet.git.branch=origin/master \
-          -Psimple.kmm.publish.repository.url="${{ secrets.PUBLISH_REPOSITORY_URL }}" \
-          -Psimple.kmm.publish.repository.id="${{ needs.generate_publish_id.outputs.repository_id }}" \
-          -Psimple.kmm.publish.username="${{ secrets.PUBLISH_REPOSITORY_USERNAME }}" \
-          -Psimple.kmm.publish.password="${{ secrets.PUBLISH_REPOSITORY_PASSWORD }}" \
-          -Psimple.kmm.sign.key.id="${{ secrets.SIGNING_KEY_ID }}" \
-          -Psimple.kmm.sign.password="${{ secrets.SIGNING_PASSWORD }}" \
-          -Psimple.kmm.sign.private.key="${{ secrets.SIGNING_PRIVATE_KEY }}" \
-          -Psimple.kmm.kotlin.compile.target.browser.js.enabled=false \
-          clean ${{ matrix.tasks }} --no-daemon --no-parallel --stacktrace
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: >
+            ${{ matrix.tasks }}
+            -Psimple.kmm.spotless.ratchet.git.branch=origin/master
+            -Psimple.kmm.publish.repository.url=${{ secrets.PUBLISH_REPOSITORY_URL }}
+            -Psimple.kmm.publish.repository.id=${{ needs.generate_publish_id.outputs.repository_id }}
+            -Psimple.kmm.publish.username=${{ secrets.PUBLISH_REPOSITORY_USERNAME }}
+            -Psimple.kmm.publish.password=${{ secrets.PUBLISH_REPOSITORY_PASSWORD }}
+            -Psimple.kmm.sign.key.id=${{ secrets.SIGNING_KEY_ID }}
+            -Psimple.kmm.sign.password=${{ secrets.SIGNING_PASSWORD }}
+            -Psimple.kmm.sign.private.key=${{ secrets.SIGNING_PRIVATE_KEY }}
+            -Psimple.kmm.kotlin.compile.target.browser.js.enabled=false
+            --no-daemon --no-parallel --stacktrace
