@@ -22,5 +22,6 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 /**
  * Get all annotation from element
  */
+@OptIn(ExperimentalSerializationApi::class)
 public fun SerialDescriptor.getElementAllAnnotation(index: Int): List<Annotation> =
     getElementAnnotations(index) + getElementDescriptor(index).annotations

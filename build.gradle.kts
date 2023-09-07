@@ -1,5 +1,3 @@
-import io.github.edmondantes.simple.kotlin.multiplatform.gradle.plugin.util.property.gradleProperty
-
 /*
  * Copyright (c) 2023. Ilia Loginov
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,10 +20,9 @@ group = "io.github.edmondantes"
 
 kotlin {
     sourceSets {
-        val kotlinSerializationVersion: String by gradleProperty { }
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinSerializationVersion")
+                implementation(libs.kotlin.serialization)
             }
         }
         val commonTest by getting {

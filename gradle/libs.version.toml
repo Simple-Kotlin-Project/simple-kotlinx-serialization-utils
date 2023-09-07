@@ -1,6 +1,9 @@
 [versions]
 simplekmm = "0.6.3"
+kotlin_serialization_version = "1.6.0"
 
+[libraries]
+kotlin_serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlin_serialization_version" }
 
 [plugins]
 simple_kotlin_gradle = { id = "io.github.edmondantes.simple.kmm.gradle.plugin", version.ref = "simplekmm" }
