@@ -14,69 +14,131 @@
  */
 package io.github.edmondantes.serialization.encoding.format
 
-import io.github.edmondantes.serialization.annotation.EncodeBy
-import io.github.edmondantes.serialization.encoding.CustomSerializationStrategy
-import io.github.edmondantes.serialization.getElementAllAnnotation
+import io.github.edmondantes.serialization.annotation.SerializationFormat
+import io.github.edmondantes.serialization.encoding.delegate.DelegateCompositeEncoder
+import io.github.edmondantes.serialization.util.DelegateIdResolveStrategy
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialFormat
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encodeToByteArray
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
 
+/**
+ * This [CompositeEncoder] helps to serializer properties as another formats.
+ * For example, you can start serialization of json, and serialize one property as xml string.
+ * @param delegate original format [CompositeEncoder]
+ * @param formats [Map] when keys is format's ids and values is formats.
+ * @see SerializationFormat
+ */
 public class FormatCompositeEncoder internal constructor(
-    private val defaultCompositeEncoder: CompositeEncoder,
-    private val formats: Map<String, EncodeFormat>,
-) : CompositeEncoder {
-
-    override val serializersModule: SerializersModule
-        get() = defaultCompositeEncoder.serializersModule
-
-    override fun encodeBooleanElement(descriptor: SerialDescriptor, index: Int, value: Boolean) {
-        encode(descriptor, index, value, defaultCompositeEncoder::encodeBooleanElement)
+    delegate: CompositeEncoder,
+    private val formats: Map<String, SerialFormat>,
+    serializersModule: SerializersModule = EmptySerializersModule(),
+) : DelegateCompositeEncoder(
+        delegate = delegate,
+        currentId = "io.github.edmondantes.serialization.encoding.format.FormatCompositeEncoder",
+        idResolveStrategy = DelegateIdResolveStrategy.DELEGATE,
+        serializersModule = serializersModule,
+    ) {
+    override fun encodeBooleanElement(
+        descriptor: SerialDescriptor,
+        index: Int,
+        value: Boolean,
+    ) {
+        encodeElement(descriptor, index, value, delegate::encodeBooleanElement)
     }
 
-    override fun encodeByteElement(descriptor: SerialDescriptor, index: Int, value: Byte) {
-        encode(descriptor, index, value, defaultCompositeEncoder::encodeByteElement)
+    override fun encodeByteElement(
+        descriptor: SerialDescriptor,
+        index: Int,
+        value: Byte,
+    ) {
+        encodeElement(descriptor, index, value, delegate::encodeByteElement)
     }
 
-    override fun encodeCharElement(descriptor: SerialDescriptor, index: Int, value: Char) {
-        encode(descriptor, index, value, defaultCompositeEncoder::encodeCharElement)
+    override fun encodeCharElement(
+        descriptor: SerialDescriptor,
+        index: Int,
+        value: Char,
+    ) {
+        encodeElement(descriptor, index, value, delegate::encodeCharElement)
     }
 
-    override fun encodeShortElement(descriptor: SerialDescriptor, index: Int, value: Short) {
-        encode(descriptor, index, value, defaultCompositeEncoder::encodeShortElement)
+    override fun encodeShortElement(
+        descriptor: SerialDescriptor,
+        index: Int,
+        value: Short,
+    ) {
+        encodeElement(descriptor, index, value, delegate::encodeShortElement)
     }
 
-    override fun encodeIntElement(descriptor: SerialDescriptor, index: Int, value: Int) {
-        encode(descriptor, index, value, defaultCompositeEncoder::encodeIntElement)
+    override fun encodeIntElement(
+        descriptor: SerialDescriptor,
+        index: Int,
+        value: Int,
+    ) {
+        encodeElement(descriptor, index, value, delegate::encodeIntElement)
     }
 
-    override fun encodeLongElement(descriptor: SerialDescriptor, index: Int, value: Long) {
-        encode(descriptor, index, value, defaultCompositeEncoder::encodeLongElement)
+    override fun encodeLongElement(
+        descriptor: SerialDescriptor,
+        index: Int,
+        value: Long,
+    ) {
+        encodeElement(descriptor, index, value, delegate::encodeLongElement)
     }
 
-    override fun encodeFloatElement(descriptor: SerialDescriptor, index: Int, value: Float) {
-        encode(descriptor, index, value, defaultCompositeEncoder::encodeFloatElement)
+    override fun encodeFloatElement(
+        descriptor: SerialDescriptor,
+        index: Int,
+        value: Float,
+    ) {
+        encodeElement(descriptor, index, value, delegate::encodeFloatElement)
     }
 
-    override fun encodeDoubleElement(descriptor: SerialDescriptor, index: Int, value: Double) {
-        encode(descriptor, index, value, defaultCompositeEncoder::encodeDoubleElement)
+    override fun encodeDoubleElement(
+        descriptor: SerialDescriptor,
+        index: Int,
+        value: Double,
+    ) {
+        encodeElement(descriptor, index, value, delegate::encodeDoubleElement)
     }
 
-    override fun encodeStringElement(descriptor: SerialDescriptor, index: Int, value: String) {
-        encode(descriptor, index, value, defaultCompositeEncoder::encodeStringElement)
+    override fun encodeStringElement(
+        descriptor: SerialDescriptor,
+        index: Int,
+        value: String,
+    ) {
+        encodeElement(descriptor, index, value, delegate::encodeStringElement)
     }
 
-    override fun encodeInlineElement(descriptor: SerialDescriptor, index: Int): Encoder =
-        defaultCompositeEncoder.encodeInlineElement(descriptor, index).let { encoder ->
-            getEncodeByAnnotation(descriptor, index)?.let { FormatEncoder(encoder, formats) } ?: encoder
+    override fun encodeInlineElement(
+        descriptor: SerialDescriptor,
+        index: Int,
+    ): Encoder = FormatEncoder(delegate.encodeInlineElement(descriptor, index))
+
+    override fun <T> encodeSerializableElement(
+        descriptor: SerialDescriptor,
+        index: Int,
+        serializer: SerializationStrategy<T>,
+        value: T,
+    ) {
+        encodeElement(
+            descriptor,
+            index,
+            serializer,
+            value,
+        ) {
+            super.encodeSerializableElement(descriptor, index, serializer, value)
         }
+    }
 
     @ExperimentalSerializationApi
     override fun <T : Any> encodeNullableSerializableElement(
@@ -85,66 +147,41 @@ public class FormatCompositeEncoder internal constructor(
         serializer: SerializationStrategy<T>,
         value: T?,
     ) {
-        val defaultAction =
-            {
-                defaultCompositeEncoder.encodeNullableSerializableElement(
-                    descriptor,
-                    index,
-                    CustomSerializationStrategy(serializer) { FormatEncoder(it, formats) },
-                    value,
-                )
-            }
-
-        encodeSerializableElement(descriptor, index, serializer, value ?: return defaultAction(), defaultAction)
-    }
-
-    override fun <T> encodeSerializableElement(
-        descriptor: SerialDescriptor,
-        index: Int,
-        serializer: SerializationStrategy<T>,
-        value: T,
-    ) {
-        encodeSerializableElement(
-            descriptor,
-            index,
-            serializer,
-            value,
-        ) {
-            defaultCompositeEncoder.encodeSerializableElement(
-                descriptor,
-                index,
-                CustomSerializationStrategy(serializer) { FormatEncoder(it, formats) },
-                value,
-            )
-        }
+        val defaultAction = { super.encodeNullableSerializableElement(descriptor, index, serializer, value) }
+        encodeElement(descriptor, index, serializer, value ?: return defaultAction(), defaultAction)
     }
 
     override fun endStructure(descriptor: SerialDescriptor) {
-        defaultCompositeEncoder.endStructure(descriptor)
+        delegate.endStructure(descriptor)
     }
 
+    override fun transformerEncoder(encoder: Encoder): Encoder = FormatEncoder(encoder, formats, serializersModule)
+
+    override fun transformerCompositeEncoder(encoder: CompositeEncoder): CompositeEncoder =
+        FormatCompositeEncoder(encoder, formats, serializersModule)
+
     /**
-     * Please don't try to merge this method to one below, because we can not use inline and reified
+     * Please don't try to merge this method to one below, because we can not use reified
      * in methods encodeSerializableElement and encodeNullableSerializableElement
      */
     @Suppress("UNCHECKED_CAST")
-    private fun <T> encodeSerializableElement(
+    private inline fun <T> encodeElement(
         descriptor: SerialDescriptor,
         index: Int,
         serializer: SerializationStrategy<T>,
         value: T,
         defaultAction: () -> Unit,
     ) {
-        val (id, seriazableFormat) = getFormat(descriptor, index)
-            ?: return defaultAction()
+        val (formatValue, formatSerializer) =
+            getFormatValueAndSerializer(
+                descriptor,
+                index,
+                serializer,
+                value,
+                defaultAction,
+            ) ?: return
 
-        val (formatValue, formatSerializer) = encode(
-            seriazableFormat,
-            { format -> format.encodeToString(serializer, value) },
-            { format -> format.encodeToByteArray(serializer, value) },
-        ) ?: error("Format with id '$id' has not one of field 'stringFormat' or 'binaryFormat'")
-
-        defaultCompositeEncoder.encodeSerializableElement(
+        delegate.encodeSerializableElement(
             descriptor,
             index,
             formatSerializer as SerializationStrategy<Any>,
@@ -152,51 +189,66 @@ public class FormatCompositeEncoder internal constructor(
         )
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private inline fun <reified T> encode(
+    private inline fun <reified T> encodeElement(
         descriptor: SerialDescriptor,
         index: Int,
         value: T,
         defaultAction: (SerialDescriptor, Int, T) -> Unit,
     ) {
-        val (id, formatSerializer) = getFormat(descriptor, index) ?: return defaultAction(descriptor, index, value)
-
-        val (formatValue, serializer) = encode(
-            formatSerializer,
-            { format -> format.encodeToString(value) },
-            { format -> format.encodeToByteArray(value) },
-        )
-            ?: error("Format with id '$id' has not one of field 'stringFormat' or 'binaryFormat'")
-
-        defaultCompositeEncoder.encodeSerializableElement(
-            descriptor,
-            index,
-            serializer as SerializationStrategy<Any>,
-            formatValue,
-        )
+        encodeElement(descriptor, index, serializersModule.serializer<T>(), value) {
+            defaultAction(descriptor, index, value)
+        }
     }
 
-    private inline fun encode(
-        format: EncodeFormat,
-        stringEncodeAction: (StringFormat) -> String,
-        binaryEncodeAction: (BinaryFormat) -> ByteArray,
+    private inline fun <T> getFormatValueAndSerializer(
+        descriptor: SerialDescriptor,
+        index: Int,
+        serializer: SerializationStrategy<T>,
+        value: T,
+        defaultAction: () -> Unit,
     ): Pair<Any, SerializationStrategy<*>>? {
-        return format.stringFormat?.let { stringEncodeAction(it) }?.let { it to STRING_SERIALIZER }
-            ?: format.binaryFormat?.let { binaryEncodeAction(it) }?.let { it to BYTE_ARRAY_SERIALIZER }
+        val (id, format) = getFormat(descriptor, index) ?: return defaultAction().let { null }
+
+        return try {
+            encodeByFormat(format, serializer, value)
+        } catch (e: SerializationException) {
+            throw SerializationException("Can not serialize value by format with id '$id'", e)
+        }
     }
 
-    private fun getFormat(descriptor: SerialDescriptor, index: Int): Pair<String, EncodeFormat>? =
-        getEncodeByAnnotation(descriptor, index)?.id?.let { id ->
+    private fun <T> encodeByFormat(
+        format: SerialFormat,
+        serializer: SerializationStrategy<T>,
+        value: T,
+    ): Pair<Any, SerializationStrategy<*>> =
+        when (format) {
+            is StringFormat -> format.encodeToString(serializer, value) to serializersModule.serializer<String>()
+            is BinaryFormat -> format.encodeToByteArray(serializer, value) to serializersModule.serializer<ByteArray>()
+            else -> throw SerializationException("Can not serialize value with unknown format. Support only StringFormat and BinaryFormat")
+        }
+
+    private fun getFormat(
+        descriptor: SerialDescriptor,
+        index: Int,
+    ): Pair<String, SerialFormat>? =
+        getFormatId(descriptor, index)?.let { id ->
             formats[id]?.let { id to it }
         }
 
     @OptIn(ExperimentalSerializationApi::class)
-    private fun getEncodeByAnnotation(descriptor: SerialDescriptor, index: Int): EncodeBy? =
-        descriptor.getElementAllAnnotation(index).filterIsInstance<EncodeBy>().firstOrNull()
-            ?: descriptor.annotations.filterIsInstance<EncodeBy>().firstOrNull()
-
-    private companion object {
-        val STRING_SERIALIZER = serializer<String>()
-        val BYTE_ARRAY_SERIALIZER = serializer<ByteArray>()
-    }
+    private fun getFormatId(
+        descriptor: SerialDescriptor,
+        index: Int,
+    ): String? =
+        (
+            descriptor
+                .getElementAnnotations(index)
+                .filterIsInstance<SerializationFormat>()
+                .firstOrNull()
+                ?: descriptor
+                    .getElementDescriptor(index)
+                    .annotations
+                    .filterIsInstance<SerializationFormat>()
+                    .firstOrNull()
+        )?.id
 }

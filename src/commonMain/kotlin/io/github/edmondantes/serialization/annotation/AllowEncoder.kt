@@ -14,18 +14,25 @@
  */
 package io.github.edmondantes.serialization.annotation
 
-import io.github.edmondantes.serialization.encoding.FilterCompositeEncoder
-import io.github.edmondantes.serialization.encoding.FilterEncoder
 import io.github.edmondantes.serialization.encoding.UniqueCompositeEncoder
 import io.github.edmondantes.serialization.encoding.UniqueEncoder
+import io.github.edmondantes.serialization.encoding.filter.FilterCompositeEncoder
+import io.github.edmondantes.serialization.encoding.filter.FilterEncoder
+import io.github.edmondantes.serialization.encoding.filter.filterBy
+import io.github.edmondantes.serialization.encoding.filter.filterByIdentifier
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialInfo
+import kotlinx.serialization.encoding.Encoder
 
 /**
+ * For enable with feature please use [filterBy] or [filterByIdentifier]
  * This annotation allows encoding for [UniqueEncoder] or [UniqueCompositeEncoder] with an id that is contained in [allow].
- * Other encoder will be ignored
+ * Other [Encoder]s will be ignored
+ *
  * @see FilterEncoder
  * @see FilterCompositeEncoder
+ * @see filterBy
+ * @see filterIsInstance
  */
 @SerialInfo
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.CLASS)

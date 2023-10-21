@@ -15,13 +15,20 @@
 package io.github.edmondantes.serialization.decoding
 
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
+/**
+ * This class helps for transform [Decoder] in deserialization process
+ * @param delegate Parent [DeserializationStrategy]
+ * @param decoderTransformer Function which transform [Decoder]
+ * @see [SerializationStrategy]
+ * @see [Encoder]
+ */
 public class CustomDeserializationStrategy<T>(
     private val delegate: DeserializationStrategy<T>,
     private val decoderTransformer: (Decoder) -> Decoder,
 ) : DeserializationStrategy<T> by delegate {
-
-    override fun deserialize(decoder: Decoder): T =
-        delegate.deserialize(decoderTransformer(decoder))
+    override fun deserialize(decoder: Decoder): T = delegate.deserialize(decoderTransformer(decoder))
 }

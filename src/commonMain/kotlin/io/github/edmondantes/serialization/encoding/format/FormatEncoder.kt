@@ -12,81 +12,113 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("unused")
-
 package io.github.edmondantes.serialization.encoding.format
 
+import io.github.edmondantes.serialization.annotation.SerializationFormat
+import io.github.edmondantes.serialization.encoding.delegate.DelegateEncoder
+import io.github.edmondantes.serialization.util.DelegateIdResolveStrategy
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.SerialFormat
 import kotlinx.serialization.StringFormat
-import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 
+/**
+ * This [Encoder] helps to serializer properties as another formats.
+ * For example, you can start serialization of json, and serialize one property as xml string.
+ * @param delegate original format [Encoder]
+ * @param formats [Map] when keys is format's ids and values is formats.
+ * @see SerializationFormat
+ */
 public class FormatEncoder public constructor(
-    private val defaultEncoder: Encoder,
-    private val formats: Map<String, EncodeFormat>,
-) : Encoder by defaultEncoder {
-
-    override val serializersModule: SerializersModule
-        get() = defaultEncoder.serializersModule
-
+    delegate: Encoder,
+    private val formats: Map<String, SerialFormat>,
+    serializersModule: SerializersModule = EmptySerializersModule(),
+) : DelegateEncoder(
+        delegate = delegate,
+        currentId = DEFAULT_ID,
+        idResolveStrategy = DelegateIdResolveStrategy.DELEGATE,
+        serializersModule = serializersModule,
+    ) {
     init {
         if (formats.containsKey("")) {
             error("Empty string can not be id for format")
         }
     }
 
-    public constructor(defaultEncoder: Encoder, formats: List<Pair<String, EncodeFormat>>) : this(
-        defaultEncoder,
+    public constructor(delegate: Encoder, formats: List<Pair<String, SerialFormat>>) : this(
+        delegate,
         formats.associate { it },
     )
 
-    public constructor(defaultEncoder: Encoder, vararg formats: Pair<String, EncodeFormat>) : this(
-        defaultEncoder,
+    public constructor(delegate: Encoder, vararg formats: Pair<String, SerialFormat>) : this(
+        delegate,
         formats.associate { it },
     )
 
-    public constructor(defaultEncoder: Encoder, formatId: String, format: StringFormat) : this(
-        defaultEncoder,
-        mapOf(formatId to stringFormat(format)),
+    public constructor(delegate: Encoder, formatId: String, format: StringFormat) : this(
+        delegate,
+        mapOf(formatId to format),
     )
 
-    public constructor(defaultEncoder: Encoder, formatId: String, format: BinaryFormat) : this(
-        defaultEncoder,
-        mapOf(formatId to binaryFormat(format)),
+    public constructor(delegate: Encoder, formatId: String, format: BinaryFormat) : this(
+        delegate,
+        mapOf(formatId to format),
     )
 
-    override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
-        val defaultCompositeEncoder = defaultEncoder.beginStructure(descriptor)
+    override fun transformerEncoder(encoder: Encoder): Encoder = FormatEncoder(encoder, formats, serializersModule)
 
-        return FormatCompositeEncoder(defaultCompositeEncoder, formats)
-    }
+    override fun transformerCompositeEncoder(encoder: CompositeEncoder): CompositeEncoder =
+        FormatCompositeEncoder(encoder, formats, serializersModule)
 
-    override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) {
-        TODO("Not yet implemented")
-    }
-
-    override fun encodeInline(descriptor: SerialDescriptor): Encoder {
-        TODO("Not yet implemented")
+    public companion object {
+        public const val DEFAULT_ID: String = "io.github.edmondantes.serialization.encoding.format.FormatEncoder"
     }
 }
 
-public fun Encoder.supportFormats(formats: Map<String, EncodeFormat>): Encoder = FormatEncoder(this, formats)
-public fun Encoder.supportFormats(formats: List<Pair<String, EncodeFormat>>): Encoder =
-    FormatEncoder(this, formats)
+/**
+ * Add [formats] supports to [Encoder]
+ */
+public fun Encoder.supportFormats(formats: Map<String, SerialFormat>): Encoder = FormatEncoder(this, formats)
 
-public fun Encoder.supportFormats(vararg formats: Pair<String, EncodeFormat>): Encoder =
-    FormatEncoder(this, *formats)
+/**
+ * Add [formats] supports to [Encoder]
+ */
+public fun Encoder.supportFormats(formats: List<Pair<String, SerialFormat>>): Encoder = FormatEncoder(this, formats)
 
+/**
+ * Add [formats] supports to [Encoder]
+ */
+public fun Encoder.supportFormats(vararg formats: Pair<String, SerialFormat>): Encoder = FormatEncoder(this, *formats)
+
+/**
+ * Add string [formats] supports to [Encoder]
+ */
 public fun Encoder.supportStringFormats(vararg formats: Pair<String, StringFormat>): Encoder =
-    FormatEncoder(this, formats.map { it.first to stringFormat(it.second) })
+    FormatEncoder(this, formats.map { it.first to it.second })
 
+/**
+ * Add binary [formats] supports to [Encoder]
+ */
 public fun Encoder.supportBinaryFormats(vararg formats: Pair<String, BinaryFormat>): Encoder =
-    FormatEncoder(this, formats.map { it.first to binaryFormat(it.second) })
+    FormatEncoder(this, formats.map { it.first to it.second })
 
-public fun Encoder.supportFormat(formatId: String, format: StringFormat): Encoder =
-    FormatEncoder(this, formatId, format)
+/**
+ * Add [format] supports to [Encoder]
+ * @param formatId id of supports [format]
+ */
+public fun Encoder.supportFormat(
+    formatId: String,
+    format: StringFormat,
+): Encoder = FormatEncoder(this, formatId, format)
 
-public fun Encoder.supportFormat(formatId: String, format: BinaryFormat): Encoder =
-    FormatEncoder(this, formatId, format)
+/**
+ * Add [format] supports to [Encoder]
+ * @param formatId id of supports [format]
+ */
+public fun Encoder.supportFormat(
+    formatId: String,
+    format: BinaryFormat,
+): Encoder = FormatEncoder(this, formatId, format)

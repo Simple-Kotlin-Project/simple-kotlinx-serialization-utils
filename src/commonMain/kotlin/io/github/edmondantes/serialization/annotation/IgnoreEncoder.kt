@@ -14,16 +14,17 @@
  */
 package io.github.edmondantes.serialization.annotation
 
-import io.github.edmondantes.serialization.encoding.FilterCompositeEncoder
-import io.github.edmondantes.serialization.encoding.FilterEncoder
 import io.github.edmondantes.serialization.encoding.UniqueCompositeEncoder
 import io.github.edmondantes.serialization.encoding.UniqueEncoder
+import io.github.edmondantes.serialization.encoding.filter.FilterCompositeEncoder
+import io.github.edmondantes.serialization.encoding.filter.FilterEncoder
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialInfo
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * This annotation ignores encoding for [UniqueEncoder] or [UniqueCompositeEncoder] with an id that is contained in [ignore].
- * Other encoder will be allowed
+ * Other [Encoder]s will be allowed
  * @see FilterEncoder
  * @see FilterCompositeEncoder
  */

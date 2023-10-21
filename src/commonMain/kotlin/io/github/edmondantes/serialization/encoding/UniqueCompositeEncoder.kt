@@ -17,11 +17,10 @@ package io.github.edmondantes.serialization.encoding
 import kotlinx.serialization.encoding.CompositeEncoder
 
 /**
- * This interface describes an [CompositeEncoder] which has unique id
+ * This interface describes an [CompositeEncoder] which has unique [id]
  * @see CompositeEncoder
  */
 public interface UniqueCompositeEncoder : CompositeEncoder {
-
     /**
      * Unique id of composite encoder
      */

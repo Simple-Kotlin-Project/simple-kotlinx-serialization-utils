@@ -14,23 +14,51 @@
  */
 package io.github.edmondantes.serialization.util
 
+/**
+ * An interface that extends the [Appendable] interface to provide methods for appending text with indentation.
+ */
 public interface AppendableWithIndent : Appendable {
-
     override fun append(value: Char): AppendableWithIndent
 
     override fun append(value: CharSequence?): AppendableWithIndent
 
-    override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AppendableWithIndent
+    override fun append(
+        value: CharSequence?,
+        startIndex: Int,
+        endIndex: Int,
+    ): AppendableWithIndent
 
+    /**
+     * Adds one to intends level counter to the current [AppendableWithIndent] instance.
+     */
     public fun addIdent(): AppendableWithIndent
 
+    /**
+     * Remove one to intends level counter to the current [AppendableWithIndent] instance.
+     */
     public fun removeIdent(): AppendableWithIndent
 
+    /**
+     * Clears intends level counter from the current [AppendableWithIndent] instance.
+     */
     public fun clearIdent(): AppendableWithIndent
 
+    /**
+     * This method adds one level of indentation before executing the [block] and removes it after the block is executed.
+     *
+     * @param block function with indent in this [AppendableWithIndent]
+     */
     public fun withIdent(block: (AppendableWithIndent) -> Unit) {
         addIdent()
         block(this)
         removeIdent()
     }
 }
+
+/**
+ * Appends a new line character ('\n') to [Appendable].
+ */
+public fun <T : Appendable> T.newLine(): T =
+    apply {
+        append('\n')
+    }

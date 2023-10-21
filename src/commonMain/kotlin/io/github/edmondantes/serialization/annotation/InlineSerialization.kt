@@ -17,6 +17,9 @@ package io.github.edmondantes.serialization.annotation
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialInfo
 
+/**
+ * Marks property or class is inline to parent
+ */
 @SerialInfo
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.CLASS)
 @OptIn(ExperimentalSerializationApi::class)

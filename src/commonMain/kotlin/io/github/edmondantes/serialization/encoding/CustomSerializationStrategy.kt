@@ -18,7 +18,7 @@ import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.encoding.Encoder
 
 /**
- * This class helps for transform [Encoder] in serialization processor
+ * This class helps for transform [Encoder] in serialization process
  * @param delegate Parent [SerializationStrategy]
  * @param encoderTransformer Function which transform [Encoder]
  * @see [SerializationStrategy]
@@ -28,8 +28,10 @@ public class CustomSerializationStrategy<T>(
     private val delegate: SerializationStrategy<T>,
     private val encoderTransformer: (Encoder) -> Encoder,
 ) : SerializationStrategy<T> by delegate {
-
-    override fun serialize(encoder: Encoder, value: T) {
+    override fun serialize(
+        encoder: Encoder,
+        value: T,
+    ) {
         delegate.serialize(encoderTransformer(encoder), value)
     }
 }

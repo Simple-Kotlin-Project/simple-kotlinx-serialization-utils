@@ -16,10 +16,16 @@ package io.github.edmondantes.serialization.encoding
 
 import kotlinx.serialization.encoding.CompositeEncoder
 
+/**
+ * Represent [CompositeEncoder] as [UniqueCompositeEncoder] with [id]
+ */
 public class UniqueCompositeEncoderContainer(private val delegate: CompositeEncoder, override val id: String) :
     UniqueCompositeEncoder,
     CompositeEncoder by delegate
 
+/**
+ * Create [UniqueCompositeEncoder] from [CompositeEncoder] with [id]
+ */
 public inline fun <reified T : CompositeEncoder> T.withId(id: String): UniqueCompositeEncoder {
     if (this is UniqueCompositeEncoder) {
         error("Can not set id for UniqueCompositeEncoder")

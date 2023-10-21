@@ -14,14 +14,42 @@
  */
 package io.github.edmondantes.serialization.util
 
-import io.github.edmondantes.serialization.encoding.BroadcastEncoder
+import io.github.edmondantes.serialization.encoding.broadcast.BroadcastEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.serializer
 
-public inline fun <reified T> T.serialize(vararg encoders: Encoder, block: Encoder.() -> Encoder = { this }) {
-    serializer<T>().serialize(if (encoders.size == 1) encoders[0].block() else BroadcastEncoder(encoders.map(block)), this)
+/**
+ * Serialize object [T] by [encoders] which will transform by [block]
+ *
+ * @param encoders [Encoder]s for serialize object
+ * @param block function for transformation each encoder in [encoders]
+ */
+public inline fun <reified T, E : Encoder> T.serialize(
+    vararg encoders: E,
+    block: E.() -> Encoder = { this },
+) {
+    if (encoders.isNotEmpty()) {
+        serializer<T>().serialize(
+            if (encoders.size == 1) encoders[0].block() else BroadcastEncoder(encoders.map(block)),
+            this,
+        )
+    }
 }
 
-public inline fun <reified T> T.serialize(encoders: List<Encoder>, block: Encoder.() -> Encoder = { this }) {
-    serializer<T>().serialize(if (encoders.size == 1) encoders[0].block() else BroadcastEncoder(encoders.map(block)), this)
+/**
+ * Serialize object [T] by [encoders] which will transform by [block]
+ *
+ * @param encoders [Encoder]s for serialize object
+ * @param block function for transformation each encoder in [encoders]
+ */
+public inline fun <reified T, E : Encoder> T.serialize(
+    encoders: List<E>,
+    block: E.() -> Encoder = { this },
+) {
+    if (encoders.isNotEmpty()) {
+        serializer<T>().serialize(
+            if (encoders.size == 1) encoders[0].block() else BroadcastEncoder(encoders.map(block)),
+            this,
+        )
+    }
 }

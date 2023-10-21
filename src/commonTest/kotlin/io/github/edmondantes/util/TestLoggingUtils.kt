@@ -15,17 +15,27 @@
 package io.github.edmondantes.util
 
 import env.Env
-import io.github.edmondantes.serialization.encoding.LoggerEncoder
+import io.github.edmondantes.serialization.decoding.logger.LoggerDecoder
+import io.github.edmondantes.serialization.encoding.logger.LoggerEncoder
 import io.github.edmondantes.serialization.util.AppendableWithIndent
 import io.github.edmondantes.serialization.util.DelegateAppendableWithIndent
+import io.github.edmondantes.serialization.util.EmptyLoggerOutput
 import io.github.edmondantes.serialization.util.serialize
+import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 fun loggerEncoder(): LoggerEncoder =
     if (Env.isEnableLogging) {
         LoggerEncoder()
     } else {
-        LoggerEncoder({})
+        LoggerEncoder(EmptyLoggerOutput)
+    }
+
+fun Decoder.loggerDecoder(): LoggerDecoder =
+    if (Env.isEnableLogging) {
+        LoggerDecoder(this)
+    } else {
+        LoggerDecoder(this, EmptyLoggerOutput)
     }
 
 fun log(msg: String) {
@@ -34,16 +44,18 @@ fun log(msg: String) {
     }
 }
 
-fun log(block: AppendableWithIndent.() -> Unit) {
-    if (Env.isEnableLogging) {
-        val builder = StringBuilder()
-        DelegateAppendableWithIndent(builder).block()
-        println(builder.toString())
-    }
+inline fun <reified T> T.serializeWithLog(
+    vararg encoders: Encoder,
+    block: Encoder.() -> Encoder = { this },
+) = serializeWithLog(encoders.toList(), block)
+
+inline fun <reified T> T.serializeWithLog(
+    encoders: List<Encoder>,
+    block: Encoder.() -> Encoder = { this },
+) {
+    log("\n------------------------")
+    serialize(encoders + loggerEncoder(), block)
+    log("------------------------\n")
 }
 
-inline fun <reified T> T.serializeWithLog(vararg encoders: Encoder, block: Encoder.() -> Encoder = { this }) =
-    serializeWithLog(encoders.toList(), block)
-
-inline fun <reified T> T.serializeWithLog(encoders: List<Encoder>, block: Encoder.() -> Encoder = { this }) =
-    serialize(encoders + loggerEncoder(), block)
+fun Decoder.withLog(): Decoder = this.loggerDecoder()

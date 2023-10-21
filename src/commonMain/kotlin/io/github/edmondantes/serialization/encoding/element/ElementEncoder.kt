@@ -14,56 +14,87 @@
  */
 package io.github.edmondantes.serialization.encoding.element
 
-import io.github.edmondantes.serialization.encoding.ConstructEncoder
+import io.github.edmondantes.serialization.element.AnyEncodedElement
+import io.github.edmondantes.serialization.element.AnyEncodedElementBuilder
+import io.github.edmondantes.serialization.element.ComplexEncodedElementBuilder
+import io.github.edmondantes.serialization.element.DefaultEncodedElement
+import io.github.edmondantes.serialization.element.EncodedElement
+import io.github.edmondantes.serialization.element.EncodedElementBuilder
+import io.github.edmondantes.serialization.element.add
+import io.github.edmondantes.serialization.element.takeIfComplex
+import io.github.edmondantes.serialization.element.toEncodedElementType
 import io.github.edmondantes.serialization.encoding.UniqueEncoder
+import io.github.edmondantes.serialization.exception.SerializationProcessException
+import io.github.edmondantes.serialization.util.tryGetElementDescriptor
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.serializer
 
-public class ElementEncoder(
+/**
+ * [Encoder] that encode value to [EncodedElement]
+ *
+ * @param builder builder for [EncodedElement]
+ * @param id id for encoder
+ * @param currentDescriptor [SerialDescriptor] of current encoding element
+ * @param parentBuilder build for parent element
+ * @param parentDescriptor [SerialDescriptor] of parent
+ * @param indexInParent index current element in parent
+ */
+@OptIn(ExperimentalSerializationApi::class)
+public open class ElementEncoder(
+    protected val builder: AnyEncodedElementBuilder?,
     id: String? = null,
-    private val parentBuilder: AbstractStructureEncodingElement.Builder<*, *>? = null,
-    private val parentDescriptor: SerialDescriptor? = null,
-    private val indexInParent: Int? = null,
-) : UniqueEncoder, ConstructEncoder<EncodingElement<*>> {
-    override val id: String = id ?: "io.github.edmondantes.serialization.encoding.element.ElementEncoder#${ID++}"
-    override val serializersModule: SerializersModule
-        get() = EmptySerializersModule()
+    protected val currentDescriptor: SerialDescriptor? = null,
+    protected val parentBuilder: ComplexEncodedElementBuilder? = null,
+    protected val parentDescriptor: SerialDescriptor? = null,
+    protected val indexInParent: Int? = null,
+    override val serializersModule: SerializersModule = EmptySerializersModule(),
+) : UniqueEncoder {
+    override val id: String = id ?: DEFAULT_ID
 
-    private var encodingElement: EncodingElement<*>? = null
-    private var builder: AbstractStructureEncodingElement.Builder<*, *>? = null
-
-    @OptIn(ExperimentalSerializationApi::class)
-    override fun beginCollection(descriptor: SerialDescriptor, collectionSize: Int): CompositeEncoder {
-        builder =
-            CollectionEncodingElement.Builder()
-                .descriptorName(
-                    (
-                        parentDescriptor?.let { parent -> indexInParent?.let { parent.getElementDescriptor(it) } }
-                            ?: descriptor
-                        ).serialName,
-                )
-                .parentDescriptor(parentDescriptor)
-                .elementIndex(indexInParent)
-        return CompositeElementEncoder(builder!!, parentBuilder)
+    init {
+        require(builder != null || parentBuilder != null) {
+            "For create ElementEncoder you should specify 'builder' or 'parentBuilder'"
+        }
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
+    override fun beginCollection(
+        descriptor: SerialDescriptor,
+        collectionSize: Int,
+    ): CompositeEncoder {
+        return beginStructure(descriptor)
+    }
+
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
-        builder =
-            StructureEncodingElement.Builder()
-                .descriptorName(
-                    (
-                        parentDescriptor?.let { parent -> indexInParent?.let { parent.getElementDescriptor(it) } }
-                            ?: descriptor
-                        ).serialName,
-                )
-                .parentDescriptor(parentDescriptor)
-                .elementIndex(indexInParent)
-        return CompositeElementEncoder(builder!!, parentBuilder)
+        val elementDescriptor = parentDescriptor.tryGetElementDescriptor(indexInParent) ?: descriptor
+
+        val currentComplexBuilder = builder?.takeIfComplex()
+
+        if (currentComplexBuilder == null && parentBuilder == null) {
+            throw SerializationProcessException(
+                "Can not encode structure when builder is not ComplexEncodedElementBuilder and encoder doesn't has parent builder",
+            )
+        }
+
+        val elementBuilder: ComplexEncodedElementBuilder =
+            currentComplexBuilder ?: DefaultEncodedElement.Builder()
+
+        elementBuilder
+            .value(mutableListOf())
+            .type(descriptor.kind.toEncodedElementType(parentBuilder?.type))
+            .descriptorName(elementDescriptor.serialName)
+            .name(parentDescriptor, indexInParent)
+
+        return CompositeElementEncoder(
+            builder = elementBuilder,
+            parentBuilder = parentBuilder,
+            id = id,
+            serializersModule = serializersModule,
+        )
     }
 
     override fun encodeBoolean(value: Boolean) {
@@ -102,39 +133,58 @@ public class ElementEncoder(
         encode(value)
     }
 
-    @ExperimentalSerializationApi
     override fun encodeNull() {
         encode(null)
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) {
+    override fun encodeEnum(
+        enumDescriptor: SerialDescriptor,
+        index: Int,
+    ) {
         encode(enumDescriptor.getElementName(index))
     }
 
-    override fun encodeInline(descriptor: SerialDescriptor): Encoder {
-        error("Not support encode inline")
-    }
-
-    private fun encode(value: Any?) {
-        val element = SimpleEncodingElement(
-            if (value == null) EncodingElementType.NULL else if (parentBuilder == null) EncodingElementType.ELEMENT else EncodingElementType.PROPERTY,
-            value,
-            parentDescriptor,
-            indexInParent,
+    override fun encodeInline(descriptor: SerialDescriptor): Encoder =
+        ElementEncoder(
+            builder = builder,
+            id = id,
+            currentDescriptor = descriptor,
+            parentBuilder = parentBuilder,
+            parentDescriptor = parentDescriptor,
+            indexInParent = indexInParent,
+            serializersModule = serializersModule,
         )
 
+    protected open fun encode(value: Any?) {
         if (parentBuilder != null) {
-            parentBuilder.add(element)
+            DefaultEncodedElement.Builder<Any?>().encode(value).build().also(parentBuilder::add)
         } else {
-            encodingElement = element
+            builder?.encode(value)
         }
     }
 
-    override fun finishConstruct(): EncodingElement<*> =
-        encodingElement ?: builder?.build() ?: error("Encoder didn't encode any values")
+    protected open fun <T> EncodedElementBuilder<T>.encode(value: T): EncodedElementBuilder<T> =
+        apply {
+            val descriptor = currentDescriptor ?: parentDescriptor.tryGetElementDescriptor(indexInParent)
+            if (descriptor?.isNullable == false && value == null) {
+                throw SerializationProcessException("Can not encode <null> to not-nullable property")
+            }
 
-    private companion object {
-        var ID = 0
+            descriptorName(descriptor)
+            name(parentDescriptor, indexInParent)
+            type(value == null, parentBuilder?.type)
+            value(value)
+        }
+
+    public companion object {
+        /**
+         * Default id for [ElementEncoder]
+         */
+        public const val DEFAULT_ID: String = "io.github.edmondantes.serialization.encoding.element.ElementEncoder"
     }
 }
+
+public inline fun <reified T> T.encodeToElement(): AnyEncodedElement =
+    DefaultEncodedElement.Builder<Any?>().also { builder ->
+        serializer<T>().serialize(ElementEncoder(builder), this)
+    }.build()

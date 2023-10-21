@@ -14,82 +14,72 @@
  */
 package io.github.edmondantes.serialization.util
 
+/**
+ * A class that implements the [AppendableWithIndent] interface to delegates append with intents to classic [Appendable]
+ *
+ * @property delegate The delegate classic [Appendable] instance.
+ * @property indent The indentation characters to be used. Defaults to four spaces.
+ */
 public class DelegateAppendableWithIndent(
     private val delegate: Appendable,
     private val indent: CharSequence = "    ",
 ) : AppendableWithIndent {
-
     private var indentCount: Int = 0
-    private var nowIsIndent: Boolean = true
+    private var needIndent: Boolean = true
 
-    override fun append(value: Char): AppendableWithIndent = apply {
-        if (value == '\n' && indentCount > 0) {
-            val builder = StringBuilder()
-            builder.append(value)
-            repeat(indentCount) {
-                builder.append(indent)
+    override fun append(value: Char): AppendableWithIndent =
+        apply {
+            if (value == '\n' && indentCount > 0) {
+                delegate.append('\n')
+                needIndent = true
+            } else {
+                if (needIndent) {
+                    repeat(indentCount) {
+                        delegate.append(indent)
+                    }
+                }
+                delegate.append(value)
+                needIndent = false
             }
-            delegate.append(builder)
-        } else {
-            delegate.append(value)
-        }
-    }
-
-    override fun append(value: CharSequence?): AppendableWithIndent = apply {
-        append(value, 0, value?.length ?: 0)
-    }
-
-    override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AppendableWithIndent {
-        if (value == null || indentCount < 1 || endIndex - startIndex < 1) {
-            delegate.append(value, startIndex, endIndex)
-            return this
         }
 
-        var builder: StringBuilder? = null
-        var prevLine: Int = -1
+    override fun append(value: CharSequence?): AppendableWithIndent =
+        apply {
+            append(value, 0, value?.length ?: 0)
+        }
 
-        for (i in startIndex until endIndex) {
-            val ch = value[i]
-
-            if (ch != '\n') {
-                continue
-            }
-
-            if (builder == null) {
-                builder = StringBuilder()
+    override fun append(
+        value: CharSequence?,
+        startIndex: Int,
+        endIndex: Int,
+    ): AppendableWithIndent =
+        apply {
+            if (value == null || endIndex - startIndex < 1) {
+                delegate.append(value, startIndex, endIndex)
+                return this
             }
 
-            builder.append(value.substring(prevLine + 1, i + 1))
-
-            repeat(indentCount) {
-                builder.append(indent)
+            value.substring(startIndex, endIndex).forEach {
+                append(it)
             }
-
-            prevLine = i
         }
 
-        if (builder == null) {
-            delegate.append(value, startIndex, endIndex)
-        } else {
-            builder.append(value.substring(prevLine + 1))
-            delegate.append(builder)
+    override fun addIdent(): AppendableWithIndent =
+        apply {
+            indentCount++
         }
 
-        return this
-    }
-
-    override fun addIdent(): AppendableWithIndent = apply {
-        indentCount++
-        if (nowIsIndent) {
-            delegate.append(indent)
+    override fun removeIdent(): AppendableWithIndent =
+        apply {
+            indentCount = (indentCount - 1).coerceAtLeast(0)
+            if (indentCount == 0) {
+                needIndent = false
+            }
         }
-    }
 
-    override fun removeIdent(): AppendableWithIndent = apply {
-        indentCount--
-    }
-
-    override fun clearIdent(): AppendableWithIndent = apply {
-        indentCount = 0
-    }
+    override fun clearIdent(): AppendableWithIndent =
+        apply {
+            indentCount = 0
+            needIndent = false
+        }
 }

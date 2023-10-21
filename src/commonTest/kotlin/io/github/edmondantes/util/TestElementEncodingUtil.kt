@@ -14,38 +14,133 @@
  */
 package io.github.edmondantes.util
 
-import io.github.edmondantes.serialization.encoding.ConstructEncoder
-import io.github.edmondantes.serialization.encoding.element.EncodingElement
-import io.github.edmondantes.serialization.encoding.element.factory.CallbackElementFactory
-import io.github.edmondantes.serialization.encoding.element.factory.ElementFactory
+import io.github.edmondantes.serialization.element.AnyEncodedElement
+import io.github.edmondantes.serialization.element.EncodedElement
+import io.github.edmondantes.serialization.element.factory.simple.DefaultSimpleEncodedElementFactory
+import io.github.edmondantes.serialization.element.factory.simple.SimpleEncodedElementFactory
+import io.github.edmondantes.serialization.element.factory.structure.ComplexEncodedElementFactory
+import io.github.edmondantes.serialization.element.factory.structure.DefaultComplexEncodedElementFactory
+import io.github.edmondantes.serialization.element.factory.structure.builder.StructureEncodingElementBuilder
+import io.github.edmondantes.serialization.element.takeIfComplex
 import kotlinx.serialization.descriptors.serialDescriptor
-import kotlin.test.assertTrue
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.fail
 
-inline fun <reified T> assertEquals(
-    encoder: ConstructEncoder<EncodingElement<*>>,
-    expected: ElementFactory.() -> Unit,
+inline fun <reified T> assertEqualsComplex(
+    actual: AnyEncodedElement,
+    expected: ComplexEncodedElementFactory.() -> Unit,
 ) {
-    CallbackElementFactory(serialDescriptor<T>(), null, null, null) {
-        assertEquals(it, encoder.finishConstruct())
+    val actualStructureElement = actual.takeIfComplex()
+    assertNotNull(actualStructureElement, "Actual element is not structure element")
+
+    DefaultComplexEncodedElementFactory(serialDescriptor<T>(), null, null, null) { it ->
+        assertEquals(it, actualStructureElement)
     }.expected()
 }
 
-fun assertEquals(expected: EncodingElement<*>, actual: EncodingElement<*>) {
-    logExpectedAndActual(expected, actual)
+inline fun <reified T> CheckContext<EncodedElement<*>>.assertEqualsComplex(expected: ComplexEncodedElementFactory.() -> Unit) =
+    assertEqualsComplex<T>(actual, expected)
 
-    assertTrue { expected == actual }
+inline fun <reified T> assertEqualsStructure(
+    element: AnyEncodedElement,
+    crossinline expected: StructureEncodingElementBuilder.() -> Unit,
+) = assertEqualsComplex<T>(element) { structure { this.expected() } }
+
+inline fun <reified T> CheckContext<EncodedElement<*>>.assertEqualsStructure(
+    crossinline expected: StructureEncodingElementBuilder.() -> Unit,
+) = assertEqualsStructure<T>(actual, expected)
+
+inline fun <reified T> assertEqualsSimple(
+    element: AnyEncodedElement,
+    expected: SimpleEncodedElementFactory<T>.() -> Unit,
+) {
+    assertNull(element.takeIfComplex(), "Actual element is complex element")
+    DefaultSimpleEncodedElementFactory<T>(serialDescriptor<T>(), null, null, null) {
+        assertEquals(it, element)
+    }.expected()
 }
 
-fun logExpectedAndActual(expected: EncodingElement<*>, actual: EncodingElement<*>) {
-    log {
-        appendLine("Expected:")
-        withIdent {
-            expected.print(it)
-        }
-        appendLine()
-        appendLine("Actual:")
-        withIdent {
-            actual.print(it)
-        }
+inline fun <reified T> CheckContext<EncodedElement<*>>.assertEqualsSimple(crossinline expected: SimpleEncodedElementFactory<T>.() -> Unit) =
+    assertEqualsSimple<T>(actual, expected)
+
+fun assertEquals(
+    e: EncodedElement<*>?,
+    a: EncodedElement<*>?,
+) {
+    if (e === a) {
+        return
+    }
+
+    compareNullability(
+        e,
+        a,
+        expectedNull = { fail("Assertion error: expected is null") },
+        actualNull = { fail("Assertion error: actual is null") },
+        notNull = { expected, actual ->
+            kotlin.test.assertEquals(
+                expected.type,
+                actual.type,
+                "Assertion error: elements types in not equals",
+            )
+
+            kotlin.test.assertEquals(
+                expected.descriptorName,
+                actual.descriptorName,
+                "Assertion error: elements descriptors names is not equals",
+            )
+
+            kotlin.test.assertEquals(
+                expected.name,
+                actual.name,
+                "Assertion error: elements names is not equals",
+            )
+
+            compareNullability(
+                expected.takeIfComplex(),
+                actual.takeIfComplex(),
+                everyNull = {
+                    kotlin.test.assertEquals(
+                        expected.value,
+                        actual.value,
+                        "Assertion error: simple elements values is not equals",
+                    )
+                },
+                actualNull = { fail("Assertion error: expected element is complex, but actual is simple") },
+                expectedNull = { fail("Assertion error: expected element is simple, but actual is complex") },
+                notNull = { expectedComplex, actualComplex ->
+                    try {
+                        expectedComplex.value.value.forEachIndexed { index, expectedElement ->
+                            try {
+                                assertEquals(expectedElement, actualComplex.value.value[index])
+                            } catch (e: AssertionError) {
+                                fail("Assertion error: element by index: $index is not equals: [${e.message}]")
+                            }
+                        }
+                    } catch (e: AssertionError) {
+                        fail("Assertion error: complex elements values is not equals: [${e.message}]")
+                    }
+                },
+            )
+        },
+    )
+}
+
+fun <E : Any, A : Any> compareNullability(
+    expected: E?,
+    actual: A?,
+    everyNull: () -> Unit = {},
+    expectedNull: (A) -> Unit = {},
+    actualNull: (E) -> Unit = {},
+    notNull: (E, A) -> Unit = { _, _ -> },
+) {
+    if (expected == null && actual == null) {
+        everyNull()
+    } else if (expected == null && actual != null) {
+        expectedNull(actual)
+    } else if (expected != null && actual == null) {
+        actualNull(expected)
+    } else {
+        notNull(expected!!, actual!!)
     }
 }
